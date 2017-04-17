@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">XDanmuku</string>
+    <item type="id" name="tag_inner_entity"></item>
 </resources>

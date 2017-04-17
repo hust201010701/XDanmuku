@@ -5,7 +5,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -18,9 +17,9 @@ import java.util.List;
 
 public class DanmuContainerView extends ViewGroup {
 
-    public final static int LOW_SPEED = 1;
-    public final static int NORMAL_SPEED = 3;
-    public final static int HIGH_SPEED = 5;
+    public final static float LOW_SPEED = 0.25f;
+    public final static float NORMAL_SPEED = 0.6f;
+    public final static float HIGH_SPEED = 1f;
 
     public final static int GRAVITY_TOP = 1 ;    //001
     public final static int GRAVITY_CENTER = 2 ;  //010
@@ -37,8 +36,11 @@ public class DanmuContainerView extends ViewGroup {
     public List<View> spanList;
 
     private int singleLineHeight;
-    DanmuConverter danmuConverter = null;
-    int speed = NORMAL_SPEED;
+
+    XAdapter xAdapter;
+
+    float speed = NORMAL_SPEED;
+
 
     public DanmuContainerView(Context context) {
         this(context, null, 0);
@@ -51,7 +53,6 @@ public class DanmuContainerView extends ViewGroup {
     public DanmuContainerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         spanList = new ArrayList<View>();
-
     }
 
 
@@ -66,14 +67,20 @@ public class DanmuContainerView extends ViewGroup {
         onItemClickListener = listener;
     };
 
+    public void setAdapter(XAdapter danmuAdapter) {
+        xAdapter = danmuAdapter;
+        singleLineHeight = danmuAdapter.getSingleLineHeight();
+        new Thread(new MyRunnable()).start();
+    }
+
     //单项点击监听器
-    public interface OnItemClickListener<M>{
-        void onItemClick(M model);
+    public interface OnItemClickListener{
+        void onItemClick(Model model);
     }
 
 
 
-    public void setSpeed(int s) {
+    public void setSpeed(float s) {
         speed = s;
     }
 
@@ -98,18 +105,25 @@ public class DanmuContainerView extends ViewGroup {
         }
     }
 
-    public void setConverter(DanmuConverter converter) {
-        danmuConverter = converter;
-        singleLineHeight = converter.getSingleLineHeight();
 
-    }
-
-    public <M> void addDanmu(final M model) throws Error {
-        if (danmuConverter == null) {
-            throw new Error("DanmuConverter can't be null,you should call setConverter firstly");
+    public void addDanmu(final Model model){
+        if (xAdapter == null) {
+            throw new Error("XAdapter(an interface need to be implemented) can't be null,you should call setAdapter firstly");
         }
-        View danmuView = danmuConverter.convert(model);
-        addView(danmuView);
+
+        View danmuView = null;
+        if(xAdapter.getCacheSize() >= 1){
+            danmuView = xAdapter.getView(model,xAdapter.removeFromCacheViews(model.getType()));
+            if(danmuView == null)
+                addTypeView(model,danmuView,false);
+            else
+                addTypeView(model,danmuView,true);
+        }
+        else {
+            danmuView = xAdapter.getView(model,null);
+            addTypeView(model,danmuView,false);
+        }
+
         //添加监听
         danmuView.setOnClickListener(new OnClickListener() {
             @Override
@@ -121,8 +135,8 @@ public class DanmuContainerView extends ViewGroup {
 
     }
 
-    @Override
-    public void addView(View child) {
+
+    public void addTypeView(Model model,View child,boolean isReused) {
         super.addView(child);
         child.measure(0, 0);
         //把宽高拿到，宽高都是包含ItemDecorate的尺寸
@@ -130,11 +144,19 @@ public class DanmuContainerView extends ViewGroup {
         int height = child.getMeasuredHeight();
         //获取最佳行数
         int bestLine = getBestLine();
-
         child.layout(WIDTH, singleLineHeight * bestLine, WIDTH + width, singleLineHeight * bestLine + height);
-        child.setTag(bestLine); //将行数保存在tag中
+
+        InnerEntity innerEntity = null;
+        innerEntity = (InnerEntity) child.getTag(R.id.tag_inner_entity);
+        if(!isReused || innerEntity==null){
+            innerEntity = new InnerEntity();
+        }
+        innerEntity.model = model;
+        innerEntity.bestLine = bestLine;
+        child.setTag(R.id.tag_inner_entity,innerEntity);
+
         spanList.set(bestLine, child);
-        new Thread(new MyRunnable(child)).start();
+
     }
 
 
@@ -188,39 +210,40 @@ public class DanmuContainerView extends ViewGroup {
         return bestLine;
     }
 
+    class InnerEntity{
+        public int bestLine;
+        public Model model;
+    }
+
 
     private class MyRunnable implements Runnable {
-        View view;
-
-        public MyRunnable(View v) {
-            view = v;
-        }
-
         @Override
         public void run() {
-            while (view.getX() + view.getWidth() >= 0) {
-
-                Message msg = new Message();
-                msg.obj = view;
-                msg.what = 1; //移动view
-                handler.sendMessage(msg);
+            int count = 0;
+            Message msg = null;
+            while(true){
+                if(count < 7500){
+                    count ++;
+                }
+                else{
+                    count = 0;
+                    if(DanmuContainerView.this.getChildCount() < xAdapter.getCacheSize() / 2){
+                        xAdapter.shrinkCacheSize();
+                        System.gc();
+                    }
+                }
+                if(DanmuContainerView.this.getChildCount() >= 0){
+                    msg = new Message();
+                    msg.what = 1; //移动view
+                    handler.sendMessage(msg);
+                }
 
                 try {
-                    Thread.sleep(10);
+                    Thread.sleep(4);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
             }
-
-            if (spanList.get((int) view.getTag()) == view) {
-                spanList.set((int) view.getTag(), null);
-            }
-
-            Message msg = new Message();
-            msg.obj = view;
-            msg.what = 2; //删除view
-            handler.sendMessage(msg);
 
         }
     }
@@ -230,12 +253,18 @@ public class DanmuContainerView extends ViewGroup {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == 1) {
-                View view = (View) msg.obj;
-//                view.setX(view.getX()-speed);
-                view.offsetLeftAndRight(0 - speed);
-            } else if (msg.what == 2) {
-                View view = (View) msg.obj;
-                DanmuContainerView.this.removeView(view);
+                for(int i=0;i<DanmuContainerView.this.getChildCount();i++){
+                    View view = DanmuContainerView.this.getChildAt(i);
+                    if(view.getX()+view.getWidth() >= 0)
+                        view.offsetLeftAndRight((int)(0 - speed));
+                    else{
+                        //添加到缓存中
+                        int type = ((InnerEntity)view.getTag(R.id.tag_inner_entity)).model.getType();
+                        xAdapter.addToCacheViews(type,view);
+                        DanmuContainerView.this.removeView(view);
+
+                    }
+                }
             }
 
         }

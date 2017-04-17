@@ -1,22 +1,15 @@
 package com.orzangleli.danmudemo;
 
+import com.orzangleli.xdanmuku.Model;
+
 /**
  * Created by Administrator on 2017/3/30.
  */
 
-public class DanmuEntity {
+public class DanmuEntity extends Model {
     public String content;
     public int textColor;
-    public int type;
     public String time;
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
 
     public String getTime() {
         return time;

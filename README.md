@@ -4,7 +4,7 @@
 ![](https://img.shields.io/badge/Android-View-brightgreen.svg)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
-##　更新
+## 更新内容 V1.1
 1. 移动View线程数修改为1
 2. 加入View缓存，并能自动调整缓存空间大小
 3. 修改Entity绑定View的方式

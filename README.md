@@ -1,3 +1,16 @@
+# XDanmuku V1.1版本
+
+[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku)
+![](https://img.shields.io/badge/Android-View-brightgreen.svg)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+
+##　更新
+1. 移动View线程数修改为1
+2. 加入View缓存，并能自动调整缓存空间大小
+3. 修改Entity绑定View的方式
+
+## 使用方法
+
 # XDanmuku
 一种支持多种弹幕样式的弹幕视图控件
 
@@ -66,78 +79,33 @@
         android:layout_height="240dp"
         />
 
-## 2. 自定义弹幕实体类DanmuEntity
+## 2. 添加自定义弹幕Entity（需要继承自Model）
 
-根据需求定制弹幕实体类，包含所有弹幕的属性和类型。
+类似于[DanmuEntity.java](https://github.com/hust201010701/XDanmuku/blob/master/app/src/main/java/com/orzangleli/danmudemo/DanmuEntity.java)
 
-	public class DanmuEntity {
-	    public String content;
-	    public int textColor;
-	    public int backgroundColor;
-	    public int type;
-	    public String time;
-	}
 
-## 3. 添加DanmuConverter（弹幕转换器）
 
-`DanmuConverter`中有两个抽象方法需要实现，`getSingleLineHeight`是返回所有弹幕样式中高度最大值作为弹幕航道的高度；`convert`负责将弹幕实体类`DanmuEntity`绑定到弹幕子视图上（类似于`BaseAdapter`的`getView`方法的作用）。
+## 3. 继承XAdapter
 
-	DanmuConverter danmuConverter = new DanmuConverter<DanmuEntity>() {
-        @Override
-        public int getSingleLineHeight() {
-            //将所有类型弹幕的布局拿出来，找到高度最大值，作为弹道高度
-            View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_danmu, null);
-            //指定行高
-            view.measure(0, 0);
+类似于ListView的BaseAdapter的结构，具体参照 [DanmuAdapter.java](https://github.com/hust201010701/XDanmuku/blob/master/app/src/main/java/com/orzangleli/danmudemo/DanmuAdapter.java)
 
-            View view2 = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_super_danmu, null);
-            //指定行高
-            view2.measure(0, 0);
-
-            return Math.max(view.getMeasuredHeight(),view2.getMeasuredHeight());
-        }
-
-        @Override
-        public View convert(DanmuEntity model) {
-            View view = null;
-            if(model.getType() == 0) {
-                view = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_danmu, null);
-                TextView content = (TextView) view.findViewById(R.id.content);
-                ImageView image = (ImageView) view.findViewById(R.id.image);
-                image.setImageResource(ICON_RESOURCES[random.nextInt(5)]);
-                content.setText(model.content);
-                content.setTextColor(Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
-            }
-            else if(model.getType() == 1) {
-                view = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_super_danmu, null);
-                TextView content = (TextView) view.findViewById(R.id.content);
-                content.setText(model.content);
-                TextView time = (TextView) view.findViewById(R.id.time);
-                time.setText(model.getTime());
-            }
-            return view;
-        }
-    };
 
 ## 4. 添加弹幕
 
 	DanmuEntity danmuEntity = new DanmuEntity();
-    danmuEntity.setContent(doubleSeed.substring(index, index + 2 + random.nextInt(20)));
-    danmuEntity.setType(random.nextInt(2));
+    danmuEntity.setContent(SEED[random.nextInt(5)]);
+    danmuEntity.setType(0);
     danmuEntity.setTime("23:20:11");
-    try {
-        danmuContainerView.addDanmu(danmuEntity);
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
+    danmuContainerView.addDanmu(danmuEntity);
 
 ## 5. 弹幕点击事件监听
 
-	//弹幕点击事件
-    danmuContainerView.setOnItemClickListener(new DanmuContainerView.OnItemClickListener<DanmuEntity>() {
+    //弹幕点击事件
+    danmuContainerView.setOnItemClickListener(new DanmuContainerView.OnItemClickListener() {
         @Override
-        public void onItemClick(DanmuEntity danmuEntity) {
-            Toast.makeText(MainActivity.this,danmuEntity.content,Toast.LENGTH_SHORT).show();
+        public void onItemClick(Model model) {
+            DanmuEntity danmuEntity = (DanmuEntity) model;
+            Toast.makeText(MainActivity.this, danmuEntity.content, Toast.LENGTH_SHORT).show();
         }
     });
 
@@ -145,17 +113,17 @@
 
 `DanmuContainerView`中预设了三种弹幕移动速度：
 
-	public final static int LOW_SPEED = 1;
-    public final static int NORMAL_SPEED = 3;
-    public final static int HIGH_SPEED = 5;
+	public static final float LOW_SPEED = 0.25F;
+    public static final float NORMAL_SPEED = 0.6F;
+    public static final float HIGH_SPEED = 1.0F;
 
 设置速度通过`setSpeed`方法：
 
 	danmuContainerView.setSpeed(DanmuContainerView.HIGH_SPEED);
 
-同时你可以传递具体的整数型速度：
+同时你可以传递具体的`float`型速度：
 
-	danmuContainerView.setSpeed(4);
+	danmuContainerView.setSpeed(0.4F);
 
 ## 7. 弹幕显示区域
 
@@ -165,14 +133,28 @@
 	danmuContainerView.setGravity(DanmuContainerView.GRAVITY_TOP | DanmuContainerView.GRAVITY_CENTER);
 
 
-# 后记
+## 致谢
 
-本控件的原理你可能已经知道了使用自定义ViewGroup实现。但是之前我花了很多事件尝试通过自定义LayoutManager让RecyclerView实现弹幕控件，不过最终这种方案失败了，更多细节讨论欢迎发送邮件(orzangleli@163.com)给我。
+感谢以下用户的建议和反馈：
 
-欢迎Star,提交Issues。
+- [tz-xiaomage](https://github.com/tz-xiaomage)
+- [kaient](https://juejin.im/user/57ed378da22b9d005bae9811)
+- [amszsthl](https://github.com/amszsthl)
+
+## 附录
+
+有几篇开发本库时的记录和心得，欢迎大家阅读点赞：
+
+- **可能是目前轻量级弹幕控件中功能最强大的一款**
+	- [orzangleli's blog](http://www.orzangleli.com/2017/04/14/2017-04-14_%E4%B8%80%E7%A7%8D%E6%94%AF%E6%8C%81%E5%A4%9A%E7%A7%8D%E5%BC%B9%E5%B9%95%E6%A0%B7%E5%BC%8F%E7%9A%84%E5%BC%B9%E5%B9%95%E8%A7%86%E5%9B%BE%E6%8E%A7%E4%BB%B6/)
+	- [掘金](https://juejin.im/post/58eeed368d6d81006465670f)
+- **基于XDanmuku的Android性能优化实战**
+	- [orzangleli's blog](http://www.orzangleli.com/2017/04/17/2017-04-17_%E5%9F%BA%E4%BA%8EXDanmuku%E7%9A%84Android%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AE%9E%E6%88%98/)
+	- [掘金](https://juejin.im/post/58f4de53da2f60005d3fe0e7)
 
 
-MIT License
+
+## MIT License
 
 Copyright (c) 2017 orzangleli
 

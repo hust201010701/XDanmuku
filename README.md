@@ -1,6 +1,6 @@
 # XDanmuku V1.1版本
 
-[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku)
+[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku/-SNAPSHOT)
 ![](https://img.shields.io/badge/Android-View-brightgreen.svg)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
@@ -64,10 +64,10 @@
 然后在你的项目中添加依赖
 
 	dependencies {
-	        compile 'com.github.hust201010701:XDanmuku:33a063b46e'
+	        compile 'com.github.hust201010701:XDanmuku:master-SNAPSHOT'
 	}
 
-其他添加依赖的方式，如maven等请自行到[点我](https://jitpack.io/#hust201010701/XDanmuku/33a063b46e)查看。
+其他添加依赖的方式，如maven等请自行到[点我](https://jitpack.io/#hust201010701/XDanmuku/-SNAPSHOT)查看。
 
 ## 1. 添加控件
 

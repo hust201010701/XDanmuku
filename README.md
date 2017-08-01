@@ -92,7 +92,7 @@
 
 ## 4. 添加弹幕
 
-	DanmuEntity danmuEntity = new DanmuEntity();
+    DanmuEntity danmuEntity = new DanmuEntity();
     danmuEntity.setContent(SEED[random.nextInt(5)]);
     danmuEntity.setType(0);
     danmuEntity.setTime("23:20:11");
@@ -113,17 +113,17 @@
 
 `DanmuContainerView`中预设了三种弹幕移动速度：
 
-	public static final float LOW_SPEED = 0.25F;
-    public static final float NORMAL_SPEED = 0.6F;
-    public static final float HIGH_SPEED = 1.0F;
+    public final static int LOW_SPEED = 1;
+    public final static int NORMAL_SPEED = 4;
+    public final static int HIGH_SPEED = 8;
 
 设置速度通过`setSpeed`方法：
 
 	danmuContainerView.setSpeed(DanmuContainerView.HIGH_SPEED);
 
-同时你可以传递具体的`float`型速度：
+同时你可以传递具体的`int`型速度(建议速度值在1-8之间，数值越大速度越快)：
 
-	danmuContainerView.setSpeed(0.4F);
+	danmuContainerView.setSpeed(5);
 
 ## 7. 弹幕显示区域
 
@@ -140,6 +140,7 @@
 - [tz-xiaomage](https://github.com/tz-xiaomage)
 - [kaient](https://juejin.im/user/57ed378da22b9d005bae9811)
 - [amszsthl](https://github.com/amszsthl)
+- [gaochunchun](https://github.com/gaochunchun)
 
 ## 附录
 

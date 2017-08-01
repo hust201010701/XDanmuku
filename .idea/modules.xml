@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/XDanmuku.iml" filepath="$PROJECT_DIR$/XDanmuku.iml" />
+      <module fileurl="file://$PROJECT_DIR$/XDanmuku-master.iml" filepath="$PROJECT_DIR$/XDanmuku-master.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/xdanmuku/xdanmuku.iml" filepath="$PROJECT_DIR$/xdanmuku/xdanmuku.iml" />
     </modules>

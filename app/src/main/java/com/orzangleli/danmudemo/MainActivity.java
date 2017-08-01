@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
         DanmuAdapter danmuAdapter = new DanmuAdapter(MainActivity.this);
         danmuContainerView.setAdapter(danmuAdapter);
 
-        danmuContainerView.setSpeed(DanmuContainerView.HIGH_SPEED);
+        danmuContainerView.setSpeed(DanmuContainerView.NORMAL_SPEED);
 
         danmuContainerView.setGravity(DanmuContainerView.GRAVITY_FULL);
 

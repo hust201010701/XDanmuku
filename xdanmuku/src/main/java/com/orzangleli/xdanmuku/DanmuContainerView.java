@@ -17,9 +17,9 @@ import java.util.List;
 
 public class DanmuContainerView extends ViewGroup {
 
-    public final static float LOW_SPEED = 0.25f;
-    public final static float NORMAL_SPEED = 0.6f;
-    public final static float HIGH_SPEED = 1f;
+    public final static int LOW_SPEED = 1;
+    public final static int NORMAL_SPEED = 4;
+    public final static int HIGH_SPEED = 8;
 
     public final static int GRAVITY_TOP = 1 ;    //001
     public final static int GRAVITY_CENTER = 2 ;  //010
@@ -39,7 +39,7 @@ public class DanmuContainerView extends ViewGroup {
 
     XAdapter xAdapter;
 
-    float speed = NORMAL_SPEED;
+    int speed = NORMAL_SPEED;
 
 
     public DanmuContainerView(Context context) {
@@ -79,8 +79,12 @@ public class DanmuContainerView extends ViewGroup {
     }
 
 
-
-    public void setSpeed(float s) {
+    /**
+     * 弹幕移动速度
+     * 建议使用 DanmuContainerView.LOW_SPEED, DanmuContainerView.NORMAL_SPEED, DanmuContainerView.HIGH_SPEED
+     * 自定义速度从1 到 8之间，值越大速度越快
+     */
+    public void setSpeed(int s) {
         speed = s;
     }
 
@@ -239,7 +243,7 @@ public class DanmuContainerView extends ViewGroup {
                 }
 
                 try {
-                    Thread.sleep(4);
+                    Thread.sleep(16);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -256,7 +260,7 @@ public class DanmuContainerView extends ViewGroup {
                 for(int i=0;i<DanmuContainerView.this.getChildCount();i++){
                     View view = DanmuContainerView.this.getChildAt(i);
                     if(view.getX()+view.getWidth() >= 0)
-                        view.offsetLeftAndRight((int)(0 - speed));
+                        view.offsetLeftAndRight(0 - speed);
                     else{
                         //添加到缓存中
                         int type = ((InnerEntity)view.getTag(R.id.tag_inner_entity)).model.getType();

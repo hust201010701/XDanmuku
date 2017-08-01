@@ -50,7 +50,7 @@
 
 **2. Gradle**
 
-[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku)
+[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku/-SNAPSHOT)
 
 先把jitpack仓库添加到项目根 `build.gradle（Project）`文件中，
 
@@ -64,7 +64,7 @@
 然后在你的项目中添加依赖
 
 	dependencies {
-	        compile 'com.github.hust201010701:XDanmuku:master-SNAPSHOT'
+	        compile 'com.github.hust201010701:XDanmuku:-SNAPSHOT'
 	}
 
 其他添加依赖的方式，如maven等请自行到[点我](https://jitpack.io/#hust201010701/XDanmuku/-SNAPSHOT)查看。

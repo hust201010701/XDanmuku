@@ -1,6 +1,6 @@
 # XDanmuku V1.1版本
 
-[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku/-SNAPSHOT)
+[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku)
 ![](https://img.shields.io/badge/Android-View-brightgreen.svg)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
 
@@ -50,7 +50,7 @@
 
 **2. Gradle**
 
-[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku/-SNAPSHOT)
+[![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku)
 
 先把jitpack仓库添加到项目根 `build.gradle（Project）`文件中，
 

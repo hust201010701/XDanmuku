@@ -1,5 +1,6 @@
 package com.orzangleli.xdanmuku;
 
+import android.util.SparseArray;
 import android.view.View;
 
 import java.util.HashMap;
@@ -11,11 +12,11 @@ import java.util.Stack;
 
 public abstract class XAdapter<M>{
 
-    private HashMap<Integer,Stack<View>> cacheViews ;
+    private SparseArray<Stack<View>> cacheViews ;
 
     public XAdapter()
     {
-        cacheViews = new HashMap<>();
+        cacheViews = new SparseArray<>();
         int typeArray[] = getViewTypeArray();
         for(int i=0;i<typeArray.length;i++){
             Stack<View> stack = new Stack<>();
@@ -29,7 +30,7 @@ public abstract class XAdapter<M>{
     public abstract int getSingleLineHeight();
 
     synchronized public void addToCacheViews(int type,View view) {
-        if(cacheViews.containsKey(type)){
+        if(cacheViews.indexOfKey(type) >= 0){
             cacheViews.get(type).push(view);
         }
         else{

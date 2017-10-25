@@ -12,7 +12,7 @@
 ## 使用方法
 
 # XDanmuku
-一种支持多种弹幕样式的弹幕视图控件
+一种支持多种弹幕样式的弹幕视图控件(点击可以查看添加库的方法)。
 
 [![](https://jitpack.io/v/hust201010701/XDanmuku.svg)](https://jitpack.io/#hust201010701/XDanmuku)
 
@@ -141,6 +141,7 @@
 - [kaient](https://juejin.im/user/57ed378da22b9d005bae9811)
 - [amszsthl](https://github.com/amszsthl)
 - [gaochunchun](https://github.com/gaochunchun)
+- [narakai](https://github.com/narakai) 提出使用SparseArray代替HashMap维护缓存池。
 
 ## 附录
 

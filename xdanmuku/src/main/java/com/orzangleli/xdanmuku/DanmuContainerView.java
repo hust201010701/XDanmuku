@@ -2,6 +2,7 @@ package com.orzangleli.xdanmuku;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -15,7 +16,10 @@ import java.util.List;
  * Created by Administrator on 2017/3/30.
  */
 
-public class DanmuContainerView extends ViewGroup {
+public class DanmuContainerView extends ViewGroup implements VideoProgoressCallback{
+
+    private final int DANMU_STEP = 500; // 0.5秒
+    private long mLastDanmuTime;
 
     public final static int LOW_SPEED = 1;
     public final static int NORMAL_SPEED = 4;
@@ -41,6 +45,8 @@ public class DanmuContainerView extends ViewGroup {
 
     int speed = NORMAL_SPEED;
 
+    private List<Model> mCachedModelPool;
+
 
     public DanmuContainerView(Context context) {
         this(context, null, 0);
@@ -53,8 +59,12 @@ public class DanmuContainerView extends ViewGroup {
     public DanmuContainerView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         spanList = new ArrayList<View>();
+        mCachedModelPool = new ArrayList<>();
     }
 
+    public void addDanmuIntoCachePool(List<Model> tmp) {
+        mCachedModelPool.addAll(tmp);
+    }
 
 
     public void setGravity(int gravity) {
@@ -65,12 +75,32 @@ public class DanmuContainerView extends ViewGroup {
 
     public void setOnItemClickListener(OnItemClickListener listener){
         onItemClickListener = listener;
-    };
+    }
 
     public void setAdapter(XAdapter danmuAdapter) {
         xAdapter = danmuAdapter;
         singleLineHeight = danmuAdapter.getSingleLineHeight();
         new Thread(new MyRunnable()).start();
+    }
+
+    @Override
+    public void onProgress(long time) {
+        if (mCachedModelPool == null || mCachedModelPool.size() == 0) {
+            return ;
+        }
+        // 显示time 至 time + DANMU_STEP 之间的弹幕
+        for (int i =0;i<mCachedModelPool.size();i++) {
+            Model model = mCachedModelPool.get(i);
+            if (model != null && model.getShowTime() >= time && model.getShowTime() < time + DANMU_STEP && mLastDanmuTime < time) {
+                addDanmu(model);
+                mLastDanmuTime = time + DANMU_STEP;
+            }
+        }
+    }
+
+
+    public void resetDanmuProgress() {
+        mLastDanmuTime = 0;
     }
 
     //单项点击监听器
@@ -252,7 +282,7 @@ public class DanmuContainerView extends ViewGroup {
         }
     }
 
-    Handler handler = new Handler() {
+    Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -266,7 +296,6 @@ public class DanmuContainerView extends ViewGroup {
                         int type = ((InnerEntity)view.getTag(R.id.tag_inner_entity)).model.getType();
                         xAdapter.addToCacheViews(type,view);
                         DanmuContainerView.this.removeView(view);
-
                     }
                 }
             }

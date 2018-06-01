@@ -2,12 +2,15 @@ package com.orzangleli.danmudemo;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.orzangleli.douyu.DyDanmuManager;
+import com.orzangleli.douyu.client.IReceiveDanmu;
 import com.orzangleli.xdanmuku.DanmuContainerView;
 import com.orzangleli.xdanmuku.Model;
 
@@ -15,7 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements IReceiveDanmu{
+
+    private final int ROOM_ID = 4809;
 
     DanmuContainerView danmuContainerView;
     Button button;
@@ -108,11 +113,18 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        DyDanmuManager.getInstance().init(ROOM_ID, this);
+
     }
 
     public void simulatePlayVideo() {
         mPlayThread = new PlayThread();
         mPlayThread.start();
+    }
+
+    @Override
+    public void receive(String name, String content) {
+        Log.d("lxc", "receive() called with: name = [" + name + "], content = [" + content + "]");
     }
 
     private class PlayThread extends Thread {

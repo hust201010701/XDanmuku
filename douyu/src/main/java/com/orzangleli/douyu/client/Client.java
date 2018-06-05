@@ -145,16 +145,17 @@ public class Client {
     public void getServMsg() throws IOException {
         byte[] b = new byte[MAX_BUFFER_LEANTH];
 
-        String msg;
+        String msg = null;
 
         int msgLenth = bim.read(b, 0, b.length);
         byte[] recvByte = new byte[msgLenth];
         //根据实际长度复制数组
         System.arraycopy(b, 0, recvByte, 0, msgLenth);
+        if (recvByte.length > 12) {
+            msg = new String(recvByte, 12, recvByte.length - 12);
+        }
 
-        msg = new String(recvByte, 12, recvByte.length - 12);
-
-        if (msg.contains("type@=")) {
+        if (msg != null && msg.contains("type@=")) {
             //弹幕有可能发生粘包情况，http://blog.csdn.net/pi9nc/article/details/17165171
             while (msg.lastIndexOf("type@=") > 5) {
                 DMEntity entity = new DMEntity(msg.substring(msg.lastIndexOf("type@=")));

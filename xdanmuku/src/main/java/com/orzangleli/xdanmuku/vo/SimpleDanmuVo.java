@@ -17,7 +17,7 @@ import android.support.annotation.NonNull;
  */
 
 public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
-    private static final int LOW_SPEED = 4;
+    private static final int LOW_SPEED = 8;
     private static final int SMALL_TEXT_SIZE = 30;
     private static final int PRIORITY_LOW = 1;
     private static final int PRIORITY_NORMAL = 2;

@@ -7,17 +7,17 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.TextureView;
-import android.view.View;
 
 import com.orzangleli.xdanmuku.controller.DanmuController;
 import com.orzangleli.xdanmuku.controller.DanmuControllerImpl;
+import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
 import com.orzangleli.xdanmuku.controller.DanmuMoveThread;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
@@ -36,7 +36,7 @@ import java.util.List;
  * <p>@version
  */
 
-public class XDanmukuView extends TextureView implements TextureView.SurfaceTextureListener{
+public class XDanmukuView extends TextureView implements TextureView.SurfaceTextureListener {
 
     public static final int MSG_UPDATE = 1;
 
@@ -44,7 +44,10 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     private Paint mDanmukuPaint;
     private DanmuController<SimpleDanmuVo> mDanmuController;
     private List<DanmuDrawer> mDanmuDrawerList;
+    private DanmuEnqueueThread mDanmuEnqueueThread;
     private DanmuMoveThread mDanmuMoveThread;
+    private boolean mIsDebug = false;
+    private long mDrawCostTime = 0;
 
     private int mWidth = -1, mHeight = -1;
 
@@ -70,12 +73,15 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
         mDanmuController = new DanmuControllerImpl();
         mDanmuDrawerList = new ArrayList<>();
-        mDanmuMoveThread = new DanmuMoveThread();
+        mDanmuEnqueueThread = new DanmuEnqueueThread();
+        mDanmuEnqueueThread.setDanmuController(this, mDanmuController);
+        mDanmuEnqueueThread.start();
+
+        mDanmuMoveThread= new DanmuMoveThread();
         mDanmuMoveThread.setDanmuController(this, mDanmuController);
+        mDanmuMoveThread.start();
         // 设置弹幕透明度
 //        this.setAlpha(1f);
-
-        mDanmuMoveThread.start();
 
     }
 
@@ -85,20 +91,24 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         mDanmukuPaint.setTextSize(30);
     }
 
-    public synchronized void drawDanmukus() {
+    public synchronized long drawDanmukus() {
+        long startTime = System.currentTimeMillis();
         if (mWidth <= 0 || mHeight <= 0) {
-            return;
+            return System.currentTimeMillis() - startTime;
         }
         Canvas canvas = this.lockCanvas();
 //        Log.i("lxc", "canvas ---> 为空：  " + (canvas == null));
         if (canvas != null) {
             // 清除画布
-            Paint paint = new Paint();
-            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-            canvas.drawPaint(paint);
+            clearCanvas(canvas);
+            // 绘制航道
+            if (mIsDebug) {
+                drawLane(canvas);
+            }
+
             List<SimpleDanmuVo> workingList = mDanmuController.getWorkingList();
             if (workingList != null) {
-                for (int i=0;i<workingList.size();i++) {
+                for (int i = 0; i < workingList.size(); i++) {
                     SimpleDanmuVo simpleDanmuVo = workingList.get(i);
                     if (simpleDanmuVo == null) {
                         continue;
@@ -106,7 +116,7 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
                     if (mDanmuDrawerList.size() == 0) {
                         drawDanmukusInternal(canvas, simpleDanmuVo);
                     } else {
-                        for (int j=0;j< mDanmuDrawerList.size();j++) {
+                        for (int j = 0; j < mDanmuDrawerList.size(); j++) {
                             DanmuDrawer danmuDrawer = mDanmuDrawerList.get(j);
                             if (danmuDrawer != null) {
                                 int width = danmuDrawer.drawDanmu(canvas, simpleDanmuVo);
@@ -114,20 +124,41 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
                             }
                         }
                     }
-//                    mDanmuController.updateLineLastDanmuVo(simpleDanmuVo, mWidth);
                 }
             }
         }
         unlockCanvasAndPost(canvas);
+        return System.currentTimeMillis() - startTime;
+    }
+
+    // 绘制弹幕航道
+    private void drawLane(Canvas canvas) {
+        int laneHeight = mHeight / DanmuEnqueueThread.MAX_LINE_NUMS;
+        int startColor = Color.parseColor("#CCCC00");
+        int endColor = Color.parseColor("#0066CC");
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        for (int i = 0; i < DanmuEnqueueThread.MAX_LINE_NUMS; i++) {
+            int color = (endColor - startColor) * i / (DanmuEnqueueThread.MAX_LINE_NUMS - 1) + startColor;
+            paint.setColor(color);
+            canvas.drawRect(new Rect(0, i * laneHeight, mWidth, (i + 1) * laneHeight), paint);
+        }
+    }
+
+    private void clearCanvas(Canvas canvas) {
+        Paint paint = new Paint();
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        canvas.drawPaint(paint);
     }
 
     // 内置的绘制弹幕的方法
     private void drawDanmukusInternal(Canvas canvas, SimpleDanmuVo simpleDanmuVo) {
         if (canvas == null || simpleDanmuVo == null || simpleDanmuVo.getContent() == null || "".equals(simpleDanmuVo.getContent())) {
-            return ;
+            return;
         }
 //        Log.i("lxc", "正在画弹幕 ---> " + simpleDanmuVo.getContent());
-        canvas.drawText(simpleDanmuVo.getContent(), mWidth - simpleDanmuVo.getPadding(), (1 + simpleDanmuVo.getLineNum()) * simpleDanmuVo.getLineHeight(), simpleDanmuVo.getDanmuPaint());
+        int laneHeight = mHeight / DanmuEnqueueThread.MAX_LINE_NUMS;
+        canvas.drawText(simpleDanmuVo.getContent(), mWidth - simpleDanmuVo.getPadding(), (0.6f + simpleDanmuVo.getLineNum()) * laneHeight, simpleDanmuVo.getDanmuPaint());
         simpleDanmuVo.setWidth((int) (simpleDanmuVo.getDanmuPaint().measureText(simpleDanmuVo.getContent()) + 0.5f));
     }
 
@@ -142,7 +173,7 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
             super.handleMessage(msg);
             switch (msg.what) {
                 case MSG_UPDATE:
-                    drawDanmukus();
+                    mDrawCostTime = drawDanmukus();
                     break;
             }
         }
@@ -157,7 +188,7 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         Log.d("lxc", "onSurfaceTextureAvailable() called with: surface = [" + surface + "], width = [" + width + "], height = [" + height + "]");
         mWidth = width;
         mHeight = height;
-        mDanmuMoveThread.setWidth(mWidth);
+        mDanmuEnqueueThread.setWidth(mWidth);
         Log.i("lxc", "mWidth ---> " + mWidth);
     }
 
@@ -179,16 +210,24 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     interface DanmuDrawer {
         /**
          * 返回值为弹幕的长度
+         *
          * @param canvas
          * @param simpleDanmuVo
+         *
          * @return
          */
         int drawDanmu(Canvas canvas, SimpleDanmuVo simpleDanmuVo);
     }
 
-    public void addDanmuDrawer (DanmuDrawer danmuDrawer) {
+    public void addDanmuDrawer(DanmuDrawer danmuDrawer) {
         mDanmuDrawerList.add(danmuDrawer);
     }
 
+    public void setDebug(boolean isDebug) {
+        this.mIsDebug = isDebug;
+    }
 
+    public long getDrawCostTime() {
+        return mDrawCostTime;
+    }
 }

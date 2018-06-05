@@ -15,7 +15,7 @@ public class DanmuActivity extends AppCompatActivity {
 
     XDanmukuView mXDanmukuView;
 
-    private final int ROOM_ID = 2132902;
+    private final int ROOM_ID = 96291;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,7 +23,7 @@ public class DanmuActivity extends AppCompatActivity {
         setContentView(R.layout.activity_danmu);
 
         mXDanmukuView = this.findViewById(R.id.xdanmukuView);
-
+        mXDanmukuView.setDebug(true);
 //        new Thread(new Runnable() {
 //            @Override
 //            public void run() {
@@ -42,7 +42,7 @@ public class DanmuActivity extends AppCompatActivity {
         DyDanmuManager.getInstance().init(ROOM_ID, new IReceiveDanmu() {
             @Override
             public void receive(String name, String content) {
-                Log.i("lxc", name + " : " +content);
+//                Log.i("lxc", name + " : " +content);
                 SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(name + " : " +content);
                 mXDanmukuView.enqueue(simpleDanmuVo);
             }

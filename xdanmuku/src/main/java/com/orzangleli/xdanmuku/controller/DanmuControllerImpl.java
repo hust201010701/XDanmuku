@@ -24,11 +24,11 @@ import java.util.concurrent.PriorityBlockingQueue;
 
 public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
     // 排队的具有优先级弹幕池列表
-    private PriorityBlockingQueue<SimpleDanmuVo> mWaitingDanmuList;
+    private volatile PriorityBlockingQueue<SimpleDanmuVo> mWaitingDanmuList;
     // 工作中的弹幕
-    private LinkedList<SimpleDanmuVo> mWorkingDanmuList;
+    private volatile LinkedList<SimpleDanmuVo> mWorkingDanmuList;
     // 每行航道的最后一个弹幕
-    private SparseArray<SimpleDanmuVo> mLineLastDanmuVoArray;
+    private volatile SparseArray<SimpleDanmuVo> mLineLastDanmuVoArray;
 
     public DanmuControllerImpl() {
         init();
@@ -49,7 +49,7 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
     }
 
     @Override
-    public void removeDanmuVo(@NonNull SimpleDanmuVo vo) {
+    public synchronized void removeDanmuVo(@NonNull SimpleDanmuVo vo) {
         // 如果不包含的话，直接return
         if (!mWaitingDanmuList.contains(vo)) {
             return ;

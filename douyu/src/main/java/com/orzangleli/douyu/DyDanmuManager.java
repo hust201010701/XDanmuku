@@ -22,7 +22,6 @@ import java.io.IOException;
  */
 
 public class DyDanmuManager {
-    private IReceiveDanmu iReceiveDanmu;
     private HeartBeatThread heartBeatThread;
     private GetDmThread getDmThread;
 

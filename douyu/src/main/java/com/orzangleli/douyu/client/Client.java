@@ -159,7 +159,9 @@ public class Client {
             while (msg.lastIndexOf("type@=") > 5) {
                 DMEntity entity = new DMEntity(msg.substring(msg.lastIndexOf("type@=")));
                 parseDM(entity.getDMList());
-                msg = msg.substring(0, msg.lastIndexOf("type@=") - 12);
+                if (msg.lastIndexOf("type@=") > 12) {
+                    msg = msg.substring(0, msg.lastIndexOf("type@=") - 12);
+                }
             }
             DMEntity entity = null;
             if (msg.contains("type@=")) {

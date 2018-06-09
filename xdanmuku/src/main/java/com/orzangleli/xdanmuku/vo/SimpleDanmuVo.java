@@ -17,7 +17,9 @@ import android.support.annotation.NonNull;
  */
 
 public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
-    private static final int LOW_SPEED = 8;
+    private static final int LOW_SPEED = 2;
+    private static final int NORMAL_SPEED = 4;
+    private static final int HIGH_SPEED = 8;
     private static final int SMALL_TEXT_SIZE = 30;
     private static final int PRIORITY_LOW = 1;
     private static final int PRIORITY_NORMAL = 2;
@@ -52,7 +54,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     }
 
     public static SimpleDanmuVo obtain(String content) {
-        return obtain(content, LOW_SPEED, Color.RED, SMALL_TEXT_SIZE, null, null, PRIORITY_NORMAL);
+        return obtain(content, HIGH_SPEED, Color.RED, SMALL_TEXT_SIZE, null, null, PRIORITY_NORMAL);
     }
 
     public static SimpleDanmuVo obtain(String content, int speed, int danmuColor, int danmuTextSize, Paint danmuPaint, Object data, int priority) {

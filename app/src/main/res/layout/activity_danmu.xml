@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.orzangleli.danmudemo.DanmuActivity"
-    android:background="#9090"
+    android:background="@drawable/lol"
     >
 
     <com.orzangleli.xdanmuku.ui.XDanmukuView

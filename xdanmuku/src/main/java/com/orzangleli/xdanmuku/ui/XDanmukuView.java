@@ -38,8 +38,6 @@ import java.util.List;
 
 public class XDanmukuView extends TextureView implements TextureView.SurfaceTextureListener {
 
-    public static final int MSG_UPDATE = 1;
-
     // 字幕画笔
     private Paint mDanmukuPaint;
     private DanmuController<SimpleDanmuVo> mDanmuController;
@@ -48,6 +46,8 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     private DanmuMoveThread mDanmuMoveThread;
     private boolean mIsDebug = false;
     private long mDrawCostTime = 0;
+
+    private long mLastDrawTime = 0;
 
     private int mWidth = -1, mHeight = -1;
 
@@ -68,16 +68,21 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     public void init(Context context) {
         initPaint();
-
+        setOpaque(false);
+        setWillNotCacheDrawing(true);
+        setDrawingCacheEnabled(false);
         this.setSurfaceTextureListener(this);
 
         mDanmuController = new DanmuControllerImpl();
         mDanmuDrawerList = new ArrayList<>();
+
         mDanmuEnqueueThread = new DanmuEnqueueThread();
+        mDanmuEnqueueThread.setName("DanmuEnqueueThread");
         mDanmuEnqueueThread.setDanmuController(this, mDanmuController);
         mDanmuEnqueueThread.start();
 
         mDanmuMoveThread= new DanmuMoveThread();
+        mDanmuMoveThread.setName("DanmuMoveThread");
         mDanmuMoveThread.setDanmuController(this, mDanmuController);
         mDanmuMoveThread.start();
         // 设置弹幕透明度
@@ -93,6 +98,8 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     public synchronized long drawDanmukus() {
         long startTime = System.currentTimeMillis();
+        Log.i("lxc", "间隔时间 ---> " + (startTime - mLastDrawTime));
+        mLastDrawTime = startTime;
         if (mWidth <= 0 || mHeight <= 0) {
             return System.currentTimeMillis() - startTime;
         }
@@ -146,9 +153,11 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     }
 
     private void clearCanvas(Canvas canvas) {
-        Paint paint = new Paint();
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-        canvas.drawPaint(paint);
+//        Paint paint = new Paint();
+//        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+//        canvas.drawPaint(paint);
+
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
     }
 
     // 内置的绘制弹幕的方法
@@ -164,23 +173,6 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     public void enqueue(SimpleDanmuVo vo) {
         mDanmuController.enqueue(vo);
-    }
-
-    @SuppressLint("HandlerLeak")
-    private Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch (msg.what) {
-                case MSG_UPDATE:
-                    mDrawCostTime = drawDanmukus();
-                    break;
-            }
-        }
-    };
-
-    public Handler getHandler() {
-        return mHandler;
     }
 
     @Override

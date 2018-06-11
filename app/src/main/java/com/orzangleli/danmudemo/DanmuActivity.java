@@ -3,6 +3,7 @@ package com.orzangleli.danmudemo;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.orzangleli.douyu.DyDanmuManager;
 import com.orzangleli.douyu.client.IReceiveDanmu;
@@ -19,8 +20,9 @@ public class DanmuActivity extends AppCompatActivity {
     private final int FENG_TI_MO = 71017;
     private final int CHEN_YI_FA = 67373;
     private final int AN_CHUN = 96291;
+    private final int SANSANJIU = 96291;
 
-    private final int ROOM_ID = AN_CHUN;
+    private final int ROOM_ID = FENG_TI_MO;
     public String SEED[] = {"桃树、杏树、梨树，你不让我", "，都开满了花赶趟儿。红的像火，", "花里带着甜味儿，闭了眼，树上", "满是桃儿、杏儿、梨儿!花下成", "嗡地闹着，大小的蝴蝶"};
 
     @Override
@@ -31,6 +33,24 @@ public class DanmuActivity extends AppCompatActivity {
         mXDanmukuView = this.findViewById(R.id.xdanmukuView);
 //        mXDanmukuView.setDebug(true);
 
+        startFakeDanmu();
+
+        DyDanmuManager.getInstance().init(ROOM_ID, new IReceiveDanmu() {
+            @Override
+            public void receive(String name, String content) {
+//                Log.i("lxc", name + " : " +content);
+                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(name + " : " + content);
+                simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
+                simpleDanmuVo.setDanmuColor(getRandomColor());
+                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);
+                mXDanmukuView.enqueue(simpleDanmuVo);
+            }
+        });
+
+
+    }
+
+    private void startFakeDanmu() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -48,20 +68,6 @@ public class DanmuActivity extends AppCompatActivity {
                 }
             }
         }).start();
-
-        DyDanmuManager.getInstance().init(ROOM_ID, new IReceiveDanmu() {
-            @Override
-            public void receive(String name, String content) {
-//                Log.i("lxc", name + " : " +content);
-                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(name + " : " + content);
-                simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
-                simpleDanmuVo.setDanmuColor(getRandomColor());
-                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);
-                mXDanmukuView.enqueue(simpleDanmuVo);
-            }
-        });
-
-
     }
 
     public int getRandomColor() {

@@ -25,7 +25,7 @@ public class GetDmThread extends Thread {
         while (client.getClientStatus() && !isInterrupted()){
             try {
                 client.getServMsg();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

@@ -1,6 +1,5 @@
 package com.orzangleli.xdanmuku.ui;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -9,8 +8,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.TextureView;
@@ -39,7 +36,7 @@ import java.util.List;
 public class XDanmukuView extends TextureView implements TextureView.SurfaceTextureListener {
 
     // 字幕画笔
-    private Paint mDanmukuPaint;
+    private Paint mDanmukuPaint, mClearPaint;
     private DanmuController<SimpleDanmuVo> mDanmuController;
     private List<DanmuDrawer> mDanmuDrawerList;
     private DanmuEnqueueThread mDanmuEnqueueThread;
@@ -92,50 +89,53 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     private void initPaint() {
         mDanmukuPaint = new Paint();
-        mDanmukuPaint.setColor(Color.RED);
-        mDanmukuPaint.setTextSize(30);
+        mClearPaint = new Paint();
+        mClearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
     }
 
     public synchronized long drawDanmukus() {
         long startTime = System.currentTimeMillis();
-        Log.i("lxc", "间隔时间 ---> " + (startTime - mLastDrawTime));
         mLastDrawTime = startTime;
         if (mWidth <= 0 || mHeight <= 0) {
             return System.currentTimeMillis() - startTime;
         }
         Canvas canvas = this.lockCanvas();
-//        Log.i("lxc", "canvas ---> 为空：  " + (canvas == null));
         if (canvas != null) {
             // 清除画布
             clearCanvas(canvas);
-            // 绘制航道
-            if (mIsDebug) {
-                drawLane(canvas);
-            }
+            drawDanmukusDirectly(canvas);
+        }
+        unlockCanvasAndPost(canvas);
+        return System.currentTimeMillis() - startTime;
+    }
 
-            List<SimpleDanmuVo> workingList = mDanmuController.getWorkingList();
-            if (workingList != null) {
-                for (int i = 0; i < workingList.size(); i++) {
-                    SimpleDanmuVo simpleDanmuVo = workingList.get(i);
-                    if (simpleDanmuVo == null) {
-                        continue;
-                    }
-                    if (mDanmuDrawerList.size() == 0) {
-                        drawDanmukusInternal(canvas, simpleDanmuVo);
-                    } else {
-                        for (int j = 0; j < mDanmuDrawerList.size(); j++) {
-                            DanmuDrawer danmuDrawer = mDanmuDrawerList.get(j);
-                            if (danmuDrawer != null) {
-                                int width = danmuDrawer.drawDanmu(canvas, simpleDanmuVo);
-                                simpleDanmuVo.setWidth(width);
-                            }
+    public void drawDanmukusDirectly(Canvas canvas) {
+        // 清除画布
+        clearCanvas(canvas);
+        // 绘制航道
+        if (mIsDebug) {
+            drawLane(canvas);
+        }
+        List<SimpleDanmuVo> workingList = mDanmuController.getWorkingList();
+        if (workingList != null) {
+            for (int i = 0; i < workingList.size(); i++) {
+                SimpleDanmuVo simpleDanmuVo = workingList.get(i);
+                if (simpleDanmuVo == null) {
+                    continue;
+                }
+                if (mDanmuDrawerList.size() == 0) {
+                    drawDanmukusInternal(canvas, simpleDanmuVo);
+                } else {
+                    for (int j = 0; j < mDanmuDrawerList.size(); j++) {
+                        DanmuDrawer danmuDrawer = mDanmuDrawerList.get(j);
+                        if (danmuDrawer != null) {
+                            int width = danmuDrawer.drawDanmu(canvas, simpleDanmuVo);
+                            simpleDanmuVo.setWidth(width);
                         }
                     }
                 }
             }
         }
-        unlockCanvasAndPost(canvas);
-        return System.currentTimeMillis() - startTime;
     }
 
     // 绘制弹幕航道
@@ -153,11 +153,9 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     }
 
     private void clearCanvas(Canvas canvas) {
-//        Paint paint = new Paint();
-//        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
-//        canvas.drawPaint(paint);
-
-        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        if (canvas != null) {
+            canvas.drawPaint(mClearPaint);
+        }
     }
 
     // 内置的绘制弹幕的方法

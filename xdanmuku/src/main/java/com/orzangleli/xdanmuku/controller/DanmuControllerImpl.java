@@ -63,14 +63,34 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
     }
 
     @Override
-    public void removeAllWorkingDanmuVo() {
+    public synchronized void removeAllWorkingDanmuVo() {
         mWorkingDanmuList.clear();
     }
 
     @Override
-    public void removeAllDanmuVo() {
+    public synchronized void removeAllDanmuVo() {
         mWaitingDanmuList.clear();
         mWorkingDanmuList.clear();
+    }
+
+    @Override
+    public synchronized void removeWorkingItem(int pos) {
+        mWorkingDanmuList.remove(pos);
+    }
+
+    @Override
+    public synchronized void removeLastItem(int pos) {
+        mLineLastDanmuVoArray.removeAt(pos);
+    }
+
+    @Override
+    public synchronized void addWorkingItem(SimpleDanmuVo simpleDanmuVo) {
+        mWorkingDanmuList.add(simpleDanmuVo);
+    }
+
+    @Override
+    public synchronized void putLastItem(int key, SimpleDanmuVo value) {
+        mLineLastDanmuVoArray.put(key, value);
     }
 
     @Override

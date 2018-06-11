@@ -31,6 +31,14 @@ public interface DanmuController<T> {
     // 移除所有弹幕
     void removeAllDanmuVo();
 
+    void removeWorkingItem(int pos);
+
+    void removeLastItem(int pos) ;
+
+    void addWorkingItem(SimpleDanmuVo simpleDanmuVo) ;
+
+    void putLastItem(int key, SimpleDanmuVo value) ;
+
     // 获取需要展示的弹幕列表
     List<T> getWorkingList();
     // 获取排队的弹幕队列

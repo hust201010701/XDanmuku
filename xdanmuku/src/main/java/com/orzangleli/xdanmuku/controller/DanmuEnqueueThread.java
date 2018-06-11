@@ -66,8 +66,8 @@ public class DanmuEnqueueThread extends Thread {
                 SimpleDanmuVo danmuVo = waitingQueue.poll();
                 if (danmuVo != null) {
                     danmuVo.setLineNum(bestLine);
-                    workingList.add(danmuVo);
-                    mDanmuController.getLineLastDanmuVoArray().put(bestLine, danmuVo);
+                    mDanmuController.addWorkingItem(danmuVo);
+                    mDanmuController.putLastItem(bestLine, danmuVo);
                     bestLine = getBestLine(mDanmuController.getLineLastDanmuVoArray());
 //                    if (bestLine != -1) {
 //                        Log.i("lxc", "bestLine ---> " + bestLine);
@@ -104,11 +104,12 @@ public class DanmuEnqueueThread extends Thread {
             if (simpleDanmuVo != null) {
                 int right = mWidth - simpleDanmuVo.getPadding() + simpleDanmuVo.getWidth();
                 if (right <= 0) {
-                    workingList.remove(i);
+                    mDanmuController.removeWorkingItem(i);
                     int index = mDanmuController.getLineLastDanmuVoArray().indexOfValue(simpleDanmuVo);
                     if (index != -1) {
-                        mDanmuController.getLineLastDanmuVoArray().removeAt(index);
+                        mDanmuController.removeLastItem(index);
                     }
+                    simpleDanmuVo = null;
                 }
             }
         }

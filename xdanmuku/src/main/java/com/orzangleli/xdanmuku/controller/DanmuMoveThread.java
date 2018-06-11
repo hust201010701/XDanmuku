@@ -1,8 +1,5 @@
 package com.orzangleli.xdanmuku.controller;
 
-import android.os.SystemClock;
-import android.util.Log;
-
 import com.orzangleli.xdanmuku.ui.XDanmukuView;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
@@ -23,7 +20,7 @@ import java.util.List;
 public class DanmuMoveThread extends Thread {
     private DanmuController mDanmuController;
     private XDanmukuView mXDanmukuView;
-    private int MOVE_INTERVAL_TIME_MILLS = 15;
+    private int MOVE_INTERVAL_TIME_MILLS = 8;
 
     public void setDanmuController(XDanmukuView xDanmukuView, DanmuController mDanmuController) {
         this.mDanmuController = mDanmuController;
@@ -48,7 +45,7 @@ public class DanmuMoveThread extends Thread {
             try {
                 long sleepTime = MOVE_INTERVAL_TIME_MILLS - costTime;
                 if (sleepTime > 0) {
-                    Thread.sleep(sleepTime);
+                    Thread.sleep(MOVE_INTERVAL_TIME_MILLS);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();

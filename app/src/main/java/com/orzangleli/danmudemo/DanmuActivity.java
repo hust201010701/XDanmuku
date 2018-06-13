@@ -8,13 +8,14 @@ import android.util.Log;
 import com.orzangleli.douyu.DyDanmuManager;
 import com.orzangleli.douyu.client.IReceiveDanmu;
 import com.orzangleli.xdanmuku.ui.XDanmukuView;
+import com.orzangleli.xdanmuku.ui.XDanmukuView2;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.Random;
 
 public class DanmuActivity extends AppCompatActivity {
 
-    XDanmukuView mXDanmukuView;
+    XDanmukuView2 mXDanmukuView;
 
     private final int CHEN_XIANG = 2132902;
     private final int FENG_TI_MO = 71017;
@@ -23,7 +24,7 @@ public class DanmuActivity extends AppCompatActivity {
     private final int SANSANJIU = 96291;
 
     private final int ROOM_ID = FENG_TI_MO;
-    public String SEED[] = {"桃树、杏树、梨树，你不让我", "，都开满了花赶趟儿。红的像火，", "花里带着甜味儿，闭了眼，树上", "满是桃儿、杏儿、梨儿!花下成", "嗡地闹着，大小的蝴蝶"};
+    public String SEED[] = {"桃树、杏树、梨树，你不让我", "都开满了花赶趟儿。红的像火，", "花里带着甜味儿，闭了眼，树上", "满是桃儿、杏儿、梨儿!花下成", "嗡地闹着，大小的蝴蝶"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +62,7 @@ public class DanmuActivity extends AppCompatActivity {
                     simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);
                     mXDanmukuView.enqueue(simpleDanmuVo);
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

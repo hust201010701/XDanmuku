@@ -8,7 +8,7 @@
     tools:context="com.orzangleli.danmudemo.DanmuActivity"
     >
 
-    <com.orzangleli.xdanmuku.ui.XDanmukuView
+    <com.orzangleli.xdanmuku.ui.XDanmukuView2
         android:id="@+id/xdanmukuView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

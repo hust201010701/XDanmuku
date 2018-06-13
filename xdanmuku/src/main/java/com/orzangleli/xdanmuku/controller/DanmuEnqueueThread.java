@@ -2,7 +2,9 @@ package com.orzangleli.xdanmuku.controller;
 
 import android.util.SparseArray;
 
+import com.orzangleli.xdanmuku.ui.IDanmukuView;
 import com.orzangleli.xdanmuku.ui.XDanmukuView;
+import com.orzangleli.xdanmuku.ui.XDanmukuView2;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.List;
@@ -22,13 +24,13 @@ import java.util.Queue;
 
 public class DanmuEnqueueThread extends Thread {
     private DanmuController mDanmuController;
-    private XDanmukuView mXDanmukuView;
+    private IDanmukuView mXDanmukuView;
     private int ENQUEUE_INTERVAL_TIME_MILLS = 100;
     private int mWidth = -1;
     private boolean mIsDestory = false;
     public static final int MAX_LINE_NUMS = 10;
 
-    public void setDanmuController(XDanmukuView xDanmukuView, DanmuController mDanmuController) {
+    public void setDanmuController(IDanmukuView xDanmukuView, DanmuController mDanmuController) {
         this.mDanmuController = mDanmuController;
         this.mXDanmukuView = xDanmukuView;
     }
@@ -109,7 +111,7 @@ public class DanmuEnqueueThread extends Thread {
                     if (index != -1) {
                         mDanmuController.removeLastItem(index);
                     }
-                    simpleDanmuVo = null;
+                    simpleDanmuVo.recycle();
                 }
             }
         }

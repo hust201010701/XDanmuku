@@ -2,7 +2,11 @@ package com.orzangleli.xdanmuku.vo;
 
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Message;
 import android.support.annotation.NonNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>description：
@@ -29,11 +33,11 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     // 弹幕优先级
     private int mPriority;
     // 弹幕所在的航道
-    private int mLineNum;
+    private int mLineNum = -1;
     // 弹幕距离右边屏幕的距离
-    private int mPadding;
+    private int mPadding = 0;
     // 弹幕长度
-    private int mWidth;
+    private int mWidth = 0;
     // 弹幕高度
     private int mLineHeight = 100;
     // 弹幕速度
@@ -49,6 +53,10 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     // 画笔
     private Paint mDanmuPaint, mDefaultPaint;
 
+    private static final Object sPoolSync = new Object();
+    private final static int MAX_POOL_SIZE = 100;
+    private static List<SimpleDanmuVo> sPool = new ArrayList<>(MAX_POOL_SIZE);
+
     private SimpleDanmuVo() {
 
     }
@@ -58,7 +66,15 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     }
 
     public static SimpleDanmuVo obtain(String content, int speed, int danmuColor, int danmuTextSize, Paint danmuPaint, Object data, int priority) {
-        SimpleDanmuVo simpleDanmuVo = new SimpleDanmuVo();
+        SimpleDanmuVo simpleDanmuVo = null;
+        synchronized (sPoolSync) {
+            if (sPool != null && sPool.size() > 0) {
+                simpleDanmuVo = sPool.remove(0);
+            }
+        }
+        if (simpleDanmuVo == null) {
+            simpleDanmuVo = new SimpleDanmuVo();
+        }
         simpleDanmuVo.mContent = content;
         simpleDanmuVo.mSpeed = speed;
         simpleDanmuVo.mDanmuColor = danmuColor;
@@ -66,9 +82,22 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mDanmuPaint = danmuPaint;
         simpleDanmuVo.mData = data;
         simpleDanmuVo.mPriority = priority;
+        simpleDanmuVo.mPadding = 0;
+        simpleDanmuVo.mLineNum = -1;
+        simpleDanmuVo.mWidth = 0;
         return simpleDanmuVo;
     }
 
+    public void recycle() {
+        synchronized (sPoolSync) {
+            if (sPool != null) {
+                if (sPool.size() >= MAX_POOL_SIZE) {
+                    sPool.remove(0);
+                }
+                sPool.add(this);
+            }
+        }
+    }
 
 
     public int getLineNum() {

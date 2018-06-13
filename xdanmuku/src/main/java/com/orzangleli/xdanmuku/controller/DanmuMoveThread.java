@@ -1,6 +1,8 @@
 package com.orzangleli.xdanmuku.controller;
 
+import com.orzangleli.xdanmuku.ui.IDanmukuView;
 import com.orzangleli.xdanmuku.ui.XDanmukuView;
+import com.orzangleli.xdanmuku.ui.XDanmukuView2;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.List;
@@ -19,10 +21,10 @@ import java.util.List;
 
 public class DanmuMoveThread extends Thread {
     private DanmuController mDanmuController;
-    private XDanmukuView mXDanmukuView;
+    private IDanmukuView mXDanmukuView;
     private int MOVE_INTERVAL_TIME_MILLS = 8;
 
-    public void setDanmuController(XDanmukuView xDanmukuView, DanmuController mDanmuController) {
+    public void setDanmuController(IDanmukuView xDanmukuView, DanmuController mDanmuController) {
         this.mDanmuController = mDanmuController;
         this.mXDanmukuView = xDanmukuView;
     }

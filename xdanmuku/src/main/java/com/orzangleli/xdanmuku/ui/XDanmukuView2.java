@@ -1,15 +1,19 @@
 package com.orzangleli.xdanmuku.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.TextureView;
 
 import com.orzangleli.xdanmuku.controller.DanmuController;
@@ -33,7 +37,7 @@ import java.util.List;
  * <p>@version
  */
 
-public class XDanmukuView extends TextureView implements TextureView.SurfaceTextureListener, IDanmukuView {
+public class XDanmukuView2 extends SurfaceView implements SurfaceHolder.Callback, IDanmukuView {
 
     // 字幕画笔
     private Paint mDanmukuPaint, mClearPaint;
@@ -48,27 +52,36 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     private int mWidth = -1, mHeight = -1;
 
-    public XDanmukuView(Context context) {
+    private SurfaceHolder mHolder;
+
+    private Bitmap mBakBitmap;
+    private Canvas mBakCanvas;
+
+    public XDanmukuView2(Context context) {
         super(context);
         init(context);
     }
 
-    public XDanmukuView(Context context, AttributeSet attrs) {
+    public XDanmukuView2(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public XDanmukuView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public XDanmukuView2(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
 
     public void init(Context context) {
         initPaint();
-        setOpaque(false);
         setWillNotCacheDrawing(true);
         setDrawingCacheEnabled(false);
-        this.setSurfaceTextureListener(this);
+
+        mHolder = this.getHolder();
+        if (mHolder != null) {
+            mHolder.addCallback(this);
+            mHolder.setFormat(PixelFormat.TRANSPARENT);
+        }
 
         mDanmuController = new DanmuControllerImpl();
         mDanmuDrawerList = new ArrayList<>();
@@ -93,6 +106,12 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         mClearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
     }
 
+    /**
+     * 之前出现 闪烁的原因找到了：
+     * 1. 之前的做法： 先清屏，再把新的弹幕绘制到屏幕上
+     * 2. 现在的做法： 先把弹幕绘制到bakBitmap上，然后再清屏，再把bakBitmap绘制到屏幕上
+     * @return
+     */
     @Override
     public synchronized long drawDanmukus() {
         long startTime = System.currentTimeMillis();
@@ -100,17 +119,20 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         if (mWidth <= 0 || mHeight <= 0) {
             return System.currentTimeMillis() - startTime;
         }
-        Canvas canvas = this.lockCanvas();
-        if (canvas != null) {
-            // 清除画布
-            clearCanvas(canvas);
-            drawDanmukusDirectly(canvas);
+        if (mHolder != null) {
+            Canvas canvas = mHolder.lockCanvas();
+            if (canvas != null) {
+                // 清除画布
+                clearCanvas(canvas);
+                drawDanmukusOnBak(canvas);
+//                canvas.drawBitmap(mBakBitmap, 0, 0, mDanmukuPaint);
+            }
+            mHolder.unlockCanvasAndPost(canvas);
         }
-        unlockCanvasAndPost(canvas);
         return System.currentTimeMillis() - startTime;
     }
 
-    public void drawDanmukusDirectly(Canvas canvas) {
+    public void drawDanmukusOnBak(Canvas canvas) {
         // 清除画布
         clearCanvas(canvas);
         // 绘制航道
@@ -175,27 +197,23 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     }
 
     @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        Log.d("lxc", "onSurfaceTextureAvailable() called with: surface = [" + surface + "], width = [" + width + "], height = [" + height + "]");
-        mWidth = width;
-        mHeight = height;
+    public void surfaceCreated(SurfaceHolder holder) {
+        mWidth = holder.getSurfaceFrame().width();
+        mHeight = holder.getSurfaceFrame().height();
         mDanmuEnqueueThread.setWidth(mWidth);
-        Log.i("lxc", "mWidth ---> " + mWidth);
+        mBakBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        mBakCanvas = new Canvas(mBakBitmap);
+        Log.i("lxc", "mWidth ---> " + mWidth + " , mHeight = " + mHeight);
     }
 
     @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        Log.d("lxc", "onSurfaceTextureSizeChanged() called with: surface = [" + surface + "], width = [" + width + "], height = [" + height + "]");
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.d("lxc", "surfaceChanged() called with: holder = [" + holder + "], format = [" + format + "], width = [" + width + "], height = [" + height + "]");
     }
 
     @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        Log.d("lxc", "onSurfaceTextureDestroyed() called with: surface = [" + surface + "]");
-        return false;
-    }
+    public void surfaceDestroyed(SurfaceHolder holder) {
 
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
     }
 
     interface DanmuDrawer {

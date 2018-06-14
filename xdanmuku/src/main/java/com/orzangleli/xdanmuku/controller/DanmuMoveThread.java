@@ -22,7 +22,7 @@ import java.util.List;
 public class DanmuMoveThread extends Thread {
     private DanmuController mDanmuController;
     private IDanmukuView mXDanmukuView;
-    private int MOVE_INTERVAL_TIME_MILLS = 8;
+    private int MOVE_INTERVAL_TIME_MILLS = 16;
 
     public void setDanmuController(IDanmukuView xDanmukuView, DanmuController mDanmuController) {
         this.mDanmuController = mDanmuController;
@@ -45,10 +45,7 @@ public class DanmuMoveThread extends Thread {
                 costTime = mXDanmukuView.drawDanmukus();
             }
             try {
-                long sleepTime = MOVE_INTERVAL_TIME_MILLS - costTime;
-                if (sleepTime > 0) {
-                    Thread.sleep(MOVE_INTERVAL_TIME_MILLS);
-                }
+                Thread.sleep(MOVE_INTERVAL_TIME_MILLS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

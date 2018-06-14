@@ -28,7 +28,7 @@ public class DanmuEnqueueThread extends Thread {
     private int ENQUEUE_INTERVAL_TIME_MILLS = 100;
     private int mWidth = -1;
     private boolean mIsDestory = false;
-    public static final int MAX_LINE_NUMS = 10;
+    public static final int MAX_LINE_NUMS = 15;
 
     public void setDanmuController(IDanmukuView xDanmukuView, DanmuController mDanmuController) {
         this.mDanmuController = mDanmuController;

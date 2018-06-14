@@ -112,7 +112,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         return mPadding;
     }
 
-    public void setPadding(int mPadding) {
+    public synchronized void setPadding(int mPadding) {
         this.mPadding = mPadding;
     }
 

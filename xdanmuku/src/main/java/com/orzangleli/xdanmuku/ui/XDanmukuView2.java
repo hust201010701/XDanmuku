@@ -10,11 +10,15 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
+import android.view.View;
+import android.widget.TextView;
 
 import com.orzangleli.xdanmuku.controller.DanmuController;
 import com.orzangleli.xdanmuku.controller.DanmuControllerImpl;
@@ -37,7 +41,7 @@ import java.util.List;
  * <p>@version
  */
 
-public class XDanmukuView2 extends SurfaceView implements SurfaceHolder.Callback, IDanmukuView {
+public class XDanmukuView2 extends View implements IDanmukuView {
 
     // 字幕画笔
     private Paint mDanmukuPaint, mClearPaint;
@@ -57,6 +61,8 @@ public class XDanmukuView2 extends SurfaceView implements SurfaceHolder.Callback
     private Bitmap mBakBitmap;
     private Canvas mBakCanvas;
 
+    public static final int MSG_UPDATE = 1;
+
     public XDanmukuView2(Context context) {
         super(context);
         init(context);
@@ -74,14 +80,6 @@ public class XDanmukuView2 extends SurfaceView implements SurfaceHolder.Callback
 
     public void init(Context context) {
         initPaint();
-        setWillNotCacheDrawing(true);
-        setDrawingCacheEnabled(false);
-
-        mHolder = this.getHolder();
-        if (mHolder != null) {
-            mHolder.addCallback(this);
-            mHolder.setFormat(PixelFormat.TRANSPARENT);
-        }
 
         mDanmuController = new DanmuControllerImpl();
         mDanmuDrawerList = new ArrayList<>();
@@ -95,15 +93,23 @@ public class XDanmukuView2 extends SurfaceView implements SurfaceHolder.Callback
         mDanmuMoveThread.setName("DanmuMoveThread");
         mDanmuMoveThread.setDanmuController(this, mDanmuController);
         mDanmuMoveThread.start();
-        // 设置弹幕透明度
-//        this.setAlpha(1f);
-
     }
 
     private void initPaint() {
         mDanmukuPaint = new Paint();
         mClearPaint = new Paint();
         mClearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (canvas != null) {
+            // 清除画布
+//            clearCanvas(canvas);
+            drawDanmukusOnBak(canvas);
+//            canvas.drawBitmap(mBakBitmap, 0, 0, mDanmukuPaint);
+        }
     }
 
     /**
@@ -114,22 +120,8 @@ public class XDanmukuView2 extends SurfaceView implements SurfaceHolder.Callback
      */
     @Override
     public synchronized long drawDanmukus() {
-        long startTime = System.currentTimeMillis();
-        mLastDrawTime = startTime;
-        if (mWidth <= 0 || mHeight <= 0) {
-            return System.currentTimeMillis() - startTime;
-        }
-        if (mHolder != null) {
-            Canvas canvas = mHolder.lockCanvas();
-            if (canvas != null) {
-                // 清除画布
-                clearCanvas(canvas);
-                drawDanmukusOnBak(canvas);
-//                canvas.drawBitmap(mBakBitmap, 0, 0, mDanmukuPaint);
-            }
-            mHolder.unlockCanvasAndPost(canvas);
-        }
-        return System.currentTimeMillis() - startTime;
+        mHandler.obtainMessage(MSG_UPDATE).sendToTarget();
+        return 0;
     }
 
     public void drawDanmukusOnBak(Canvas canvas) {
@@ -197,24 +189,33 @@ public class XDanmukuView2 extends SurfaceView implements SurfaceHolder.Callback
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        mWidth = holder.getSurfaceFrame().width();
-        mHeight = holder.getSurfaceFrame().height();
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        mWidth = MeasureSpec.getSize(widthMeasureSpec);
+        mHeight = MeasureSpec.getSize(heightMeasureSpec);
         mDanmuEnqueueThread.setWidth(mWidth);
-        mBakBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
-        mBakCanvas = new Canvas(mBakBitmap);
-        Log.i("lxc", "mWidth ---> " + mWidth + " , mHeight = " + mHeight);
+        if (mBakBitmap != null) {
+            mBakBitmap.recycle();
+        }
+        mBakBitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
+        if (mBakCanvas != null) {
+            mBakCanvas.setBitmap(mBakBitmap);
+        } else {
+            mBakCanvas = new Canvas(mBakBitmap);
+        }
     }
 
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.d("lxc", "surfaceChanged() called with: holder = [" + holder + "], format = [" + format + "], width = [" + width + "], height = [" + height + "]");
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-
-    }
+    public Handler mHandler = new Handler (){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case MSG_UPDATE:
+                    invalidate();
+                    break;
+            }
+        }
+    };
 
     interface DanmuDrawer {
         /**

@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".DFMDanmuActivity"
+            android:name=".DanmuActivity"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
@@ -24,7 +24,7 @@
         <activity android:name=".MainActivity">
         </activity>
 
-        <activity android:name=".DanmuActivity">
+        <activity android:name=".DFMDanmuActivity">
         </activity>
     </application>
 

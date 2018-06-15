@@ -125,7 +125,7 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
                     continue;
                 }
                 if (mDanmuDrawerList.size() == 0) {
-                    drawDanmukusInternal(canvas, simpleDanmuVo);
+                    simpleDanmuVo.drawDanmukusInternal(canvas, mWidth, mHeight);
                 } else {
                     for (int j = 0; j < mDanmuDrawerList.size(); j++) {
                         DanmuDrawer danmuDrawer = mDanmuDrawerList.get(j);
@@ -157,17 +157,6 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         if (canvas != null) {
             canvas.drawPaint(mClearPaint);
         }
-    }
-
-    // 内置的绘制弹幕的方法
-    private void drawDanmukusInternal(Canvas canvas, SimpleDanmuVo simpleDanmuVo) {
-        if (canvas == null || simpleDanmuVo == null || simpleDanmuVo.getContent() == null || "".equals(simpleDanmuVo.getContent())) {
-            return;
-        }
-//        Log.i("lxc", "正在画弹幕 ---> " + simpleDanmuVo.getContent());
-        int laneHeight = mHeight / DanmuEnqueueThread.MAX_LINE_NUMS;
-        canvas.drawText(simpleDanmuVo.getContent(), mWidth - simpleDanmuVo.getPadding(), (0.6f + simpleDanmuVo.getLineNum()) * laneHeight, simpleDanmuVo.getDanmuPaint());
-        simpleDanmuVo.setWidth((int) (simpleDanmuVo.getDanmuPaint().measureText(simpleDanmuVo.getContent()) + 0.5f));
     }
 
     public void enqueue(SimpleDanmuVo vo) {

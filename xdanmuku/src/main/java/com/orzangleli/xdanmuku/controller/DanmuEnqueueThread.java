@@ -104,8 +104,17 @@ public class DanmuEnqueueThread extends Thread {
         for (int i = 0; i < workingList.size(); i++) {
             SimpleDanmuVo simpleDanmuVo = workingList.get(i);
             if (simpleDanmuVo != null) {
-                int right = mWidth - simpleDanmuVo.getPadding() + simpleDanmuVo.getWidth();
-                if (right <= 0) {
+                boolean shouldRecycle = false;
+                switch (simpleDanmuVo.getBehavior()) {
+                    case RIGHT2LEFT:
+                        int right = simpleDanmuVo.getPadding() + simpleDanmuVo.getWidth();
+                        shouldRecycle = right < 0;
+                        break;
+                    case LEFT2RIGHT:
+                        shouldRecycle = (mWidth + simpleDanmuVo.getWidth() - simpleDanmuVo.getPadding()) < 0;
+                        break;
+                }
+                if (shouldRecycle) {
                     mDanmuController.removeWorkingItem(i);
                     int index = mDanmuController.getLineLastDanmuVoArray().indexOfValue(simpleDanmuVo);
                     if (index != -1) {

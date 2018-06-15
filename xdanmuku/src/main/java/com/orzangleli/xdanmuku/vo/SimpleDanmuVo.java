@@ -1,9 +1,14 @@
 package com.orzangleli.xdanmuku.vo;
 
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Rect;
 import android.os.Message;
 import android.support.annotation.NonNull;
+
+import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,17 +34,14 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private static final int PRIORITY_NORMAL = 2;
     private static final int PRIORITY_HIGH = 3;
 
-
     // 弹幕优先级
     private int mPriority;
     // 弹幕所在的航道
     private int mLineNum = -1;
     // 弹幕距离右边屏幕的距离
-    private int mPadding = 0;
+    private int mPadding = Integer.MIN_VALUE;
     // 弹幕长度
     private int mWidth = 0;
-    // 弹幕高度
-    private int mLineHeight = 100;
     // 弹幕速度
     private int mSpeed;
     // 业务弹幕数据类型
@@ -52,6 +54,28 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private int mDanmuTextSize;
     // 画笔
     private Paint mDanmuPaint, mDefaultPaint;
+    // 边框颜色 如果为-1则没有边框
+    private int mBorderColor;
+    // 边框宽度
+    private int BORDER_WIDTH = 5;
+    // 边框画笔
+    private Paint mBorderPaint;
+    // 弹幕行为, 默认从右到左
+    private Behavior mBehavior = Behavior.RIGHT2LEFT;
+
+    /**
+     * 弹幕行为 支持从右到左，从左到右，顶部悬停，中间悬停，底部悬停
+     */
+    public enum Behavior {
+        RIGHT2LEFT,
+        LEFT2RIGHT,
+        TOP,
+        BOTTOM,
+        CENTER,
+        CUSTOM
+    }
+
+
 
     private static final Object sPoolSync = new Object();
     private final static int MAX_POOL_SIZE = 100;
@@ -62,10 +86,14 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     }
 
     public static SimpleDanmuVo obtain(String content) {
-        return obtain(content, HIGH_SPEED, Color.RED, SMALL_TEXT_SIZE, null, null, PRIORITY_NORMAL);
+        return obtain(content, HIGH_SPEED, Color.RED, SMALL_TEXT_SIZE, null, null, PRIORITY_NORMAL, -1);
     }
 
-    public static SimpleDanmuVo obtain(String content, int speed, int danmuColor, int danmuTextSize, Paint danmuPaint, Object data, int priority) {
+    public static SimpleDanmuVo obtain(String content, int borderColor) {
+        return obtain(content, HIGH_SPEED, Color.RED, SMALL_TEXT_SIZE, null, null, PRIORITY_NORMAL, borderColor);
+    }
+
+    public static SimpleDanmuVo obtain(String content, int speed, int danmuColor, int danmuTextSize, Paint danmuPaint, Object data, int priority, int borderColor) {
         SimpleDanmuVo simpleDanmuVo = null;
         synchronized (sPoolSync) {
             if (sPool != null && sPool.size() > 0) {
@@ -82,9 +110,11 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mDanmuPaint = danmuPaint;
         simpleDanmuVo.mData = data;
         simpleDanmuVo.mPriority = priority;
-        simpleDanmuVo.mPadding = 0;
+        simpleDanmuVo.mPadding = Integer.MIN_VALUE;
         simpleDanmuVo.mLineNum = -1;
         simpleDanmuVo.mWidth = 0;
+        simpleDanmuVo.mBorderColor = borderColor;
+        simpleDanmuVo.mBehavior = Behavior.RIGHT2LEFT;
         return simpleDanmuVo;
     }
 
@@ -116,14 +146,6 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         this.mPadding = mPadding;
     }
 
-    public int getLineHeight() {
-        return mLineHeight;
-    }
-
-    public void setLineHeight(int mLineHeight) {
-        this.mLineHeight = mLineHeight;
-    }
-
     public int getSpeed() {
         return mSpeed;
     }
@@ -150,6 +172,14 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
 
     public int getDanmuColor() {
         return mDanmuColor;
+    }
+
+    public int getBorderColor() {
+        return mBorderColor;
+    }
+
+    public void setBorderColor(int borderColor) {
+        this.mBorderColor = borderColor;
     }
 
     public void setDanmuColor(int mDanmuColor) {
@@ -183,8 +213,29 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         return mDefaultPaint;
     }
 
+    public Paint getBorderPaint() {
+        if (mBorderPaint == null) {
+            mBorderPaint = new Paint();
+            mBorderPaint.setAntiAlias(true);
+            mBorderPaint.setStyle(Paint.Style.STROKE);
+            mBorderPaint.setStrokeWidth(BORDER_WIDTH);
+        }
+        if (mBorderColor != -1) {
+            mBorderPaint.setColor(mBorderColor);
+        }
+        return mBorderPaint;
+    }
+
     public void setDanmuPaint(Paint mDanmuPaint) {
         this.mDanmuPaint = mDanmuPaint;
+    }
+
+    public Behavior getBehavior() {
+        return mBehavior;
+    }
+
+    public void setBehavior(Behavior behavior) {
+        this.mBehavior = behavior;
     }
 
     public int getWidth() {
@@ -208,5 +259,37 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         return this.getPriority() - o.getPriority();
     }
 
+    // 内置的绘制弹幕的方法
+    public void drawDanmukusInternal(Canvas canvas, int width, int height) {
+        if (canvas == null || this.getContent() == null || "".equals(this.getContent())) {
+            return;
+        }
+        mWidth = (int)(this.getDanmuPaint().measureText(this.getContent()) + 0.5f);
+        int laneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
+
+        Rect bounds = new Rect();
+        this.getDanmuPaint().getTextBounds(this.getContent(), 0, this.getContent().length(), bounds);
+        float x = 0, y = 0;
+        if (mBehavior == Behavior.RIGHT2LEFT) {
+            x = this.getPadding();
+        } else if (mBehavior == Behavior.LEFT2RIGHT){
+            x = this.getPadding() - mWidth;
+        }
+        y = (laneHeight + 0.5f) * getLineNum() - bounds.height() / 2;
+        canvas.drawText(this.getContent(), x, y, this.getDanmuPaint());
+
+        Paint.FontMetricsInt fontMetrics = this.getDanmuPaint().getFontMetricsInt();
+        float bottomPadding = fontMetrics.bottom - fontMetrics.top - bounds.height();
+        float leftPadding = 20;
+        if (this.getBorderColor() != -1) {
+            Path path = new Path();
+            path.moveTo(x - leftPadding, y + bottomPadding);
+            path.lineTo(x + bounds.width() + leftPadding, y + bottomPadding);
+            path.lineTo(x + bounds.width() + leftPadding, y - bounds.height());
+            path.lineTo(x - leftPadding, y - bounds.height());
+            path.lineTo(x - leftPadding, y + bottomPadding);
+            canvas.drawPath(path, getBorderPaint());
+        }
+    }
 
 }

@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.orzangleli.douyu.DyDanmuManager;
 import com.orzangleli.douyu.client.IReceiveDanmu;
@@ -34,13 +35,25 @@ public class DanmuActivity extends AppCompatActivity {
         mXDanmukuView = this.findViewById(R.id.xdanmukuView);
 //        mXDanmukuView.setDebug(true);
 
+        mXDanmukuView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu(), Color.BLUE);
+                simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
+                simpleDanmuVo.setDanmuColor(getRandomColor());
+                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);
+                simpleDanmuVo.setBehavior(SimpleDanmuVo.Behavior.LEFT2RIGHT);
+                mXDanmukuView.enqueue(simpleDanmuVo);
+            }
+        });
+
         startFakeDanmu();
 
         DyDanmuManager.getInstance().init(ROOM_ID, new IReceiveDanmu() {
             @Override
             public void receive(String name, String content) {
 //                Log.i("lxc", name + " : " +content);
-                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(name + " : " + content);
+                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(name + " : " + content, Color.GREEN);
                 simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
                 simpleDanmuVo.setDanmuColor(getRandomColor());
                 simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);

@@ -33,20 +33,24 @@ public interface DanmuController<T> {
 
     void removeWorkingItem(int pos);
 
-    void removeLastItem(int pos) ;
-
-    void addWorkingItem(SimpleDanmuVo simpleDanmuVo) ;
-
-    void putLastItem(int key, SimpleDanmuVo value) ;
+    void addWorkingItem(SimpleDanmuVo simpleDanmuVo);
 
     // 获取需要展示的弹幕列表
     List<T> getWorkingList();
     // 获取排队的弹幕队列
     Queue<T> getWaitingQueue();
-    // 更新每个航道里的最后一个弹幕
-    void updateLineLastDanmuVo(T vo, int width);
 
-    SparseArray getLineLastDanmuVoArray();
+    SparseArray getLastDanmuVoArrayByVo(SimpleDanmuVo simpleDanmuVo);
+
+    SparseArray getRightLineLastDanmuVoArray();
+
+    SparseArray getLeftLineLastDanmuVoArray();
+
+    SparseArray getTopLineLastDanmuVoArray();
+
+    SparseArray getCenterLineLastDanmuVoArray();
+
+    SparseArray getBottomLineLastDanmuVoArray();
 
     SimpleDanmuVo getTheMoreRightDanmuVo(SimpleDanmuVo simpleDanmuVo1, SimpleDanmuVo simpleDanmuVo2, int width);
 }

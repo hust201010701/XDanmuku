@@ -56,33 +56,30 @@ public class DanmuEnqueueThread extends Thread {
             long time2 = System.currentTimeMillis();
 //            Log.i("lxc", "1 ---> 2:" + (time2-time1));
 
-            int bestLine = getBestLine(mDanmuController.getLineLastDanmuVoArray());
-//            Log.i("lxc", "bestLine ---> " + bestLine);
             long time3 = System.currentTimeMillis();
 //            Log.i("lxc", "2 ---> 3:" + (time3-time2));
             // 如果bestLine 为 -1，表示没有足够的空间放下这条弹幕，那么直接进入丢弃此弹幕下一帧
             // TODO: 2018/6/5 对高优先级特殊处理，高优先级优先显示
             int times = 0;
-            while (bestLine != -1 && times < MAX_LINE_NUMS) {
+            while (times < MAX_LINE_NUMS) {
                 // 从等待列表中移除一个添加到工作列表
                 SimpleDanmuVo danmuVo = waitingQueue.poll();
                 if (danmuVo != null) {
-                    danmuVo.setLineNum(bestLine);
-                    mDanmuController.addWorkingItem(danmuVo);
-                    mDanmuController.putLastItem(bestLine, danmuVo);
-                    bestLine = getBestLine(mDanmuController.getLineLastDanmuVoArray());
-//                    if (bestLine != -1) {
-//                        Log.i("lxc", "bestLine ---> " + bestLine);
-//                    }
+                    int bestLine = getBestLine(danmuVo, mDanmuController.getLeftLineLastDanmuVoArray(),
+                            mDanmuController.getRightLineLastDanmuVoArray(), mDanmuController.getTopLineLastDanmuVoArray(),
+                            mDanmuController.getCenterLineLastDanmuVoArray(), mDanmuController.getBottomLineLastDanmuVoArray());
+
+                    if (bestLine >= 0 && bestLine < MAX_LINE_NUMS) {
+                        danmuVo.setLineNum(bestLine);
+                        mDanmuController.addWorkingItem(danmuVo);
+                        SparseArray lastDanmuVoArrayByVo = mDanmuController.getLastDanmuVoArrayByVo(danmuVo);
+                        if (lastDanmuVoArrayByVo != null) {
+                            lastDanmuVoArrayByVo.put(bestLine, danmuVo);
+                        }
+                    }
                     times++;
-                } else {
-                    bestLine = -1;
                 }
             }
-            long time4 = System.currentTimeMillis();
-//            Log.i("lxc", "3 ---> 4:" + (time4-time3));
-            long time5 = System.currentTimeMillis();
-//            Log.i("lxc", "4 ---> 5:" + (time5-time4));
             try {
                 Thread.sleep(ENQUEUE_INTERVAL_TIME_MILLS);
             } catch (InterruptedException e) {
@@ -116,28 +113,75 @@ public class DanmuEnqueueThread extends Thread {
                 }
                 if (shouldRecycle) {
                     mDanmuController.removeWorkingItem(i);
-                    int index = mDanmuController.getLineLastDanmuVoArray().indexOfValue(simpleDanmuVo);
-                    if (index != -1) {
-                        mDanmuController.removeLastItem(index);
+                    SparseArray lastDanmuVoArrayByVo = mDanmuController.getLastDanmuVoArrayByVo(simpleDanmuVo);
+                    if (lastDanmuVoArrayByVo != null) {
+                        int index = lastDanmuVoArrayByVo.indexOfValue(simpleDanmuVo);
+                        if (index != -1) {
+                            lastDanmuVoArrayByVo.removeAt(index);
+                        }
+                        simpleDanmuVo.recycle();
                     }
-                    simpleDanmuVo.recycle();
                 }
             }
         }
     }
 
-    public int getBestLine(SparseArray<SimpleDanmuVo> lineLastDanmuVoArray) {
-        if (lineLastDanmuVoArray == null || lineLastDanmuVoArray.size() == 0) {
+    public int getBestLine(SimpleDanmuVo simpleDanmuVo,
+                           SparseArray<SimpleDanmuVo> leftLineLastDanmuVoArray,
+                           SparseArray<SimpleDanmuVo> rightLineLastDanmuVoArray,
+                           SparseArray<SimpleDanmuVo> topLineLastDanmuVoArray,
+                           SparseArray<SimpleDanmuVo> centerLineLastDanmuVoArray,
+                           SparseArray<SimpleDanmuVo> bottomLineLastDanmuVoArray) {
+        if (simpleDanmuVo != null && simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.RIGHT2LEFT
+                && (leftLineLastDanmuVoArray == null || leftLineLastDanmuVoArray.size() == 0)) {
             return 0;
         }
-        for (int i = 0; i < MAX_LINE_NUMS; i++) {
-            SimpleDanmuVo temp = lineLastDanmuVoArray.get(i);
-            // 没有宽度的弹幕是刚刚插入的，还没有绘制所有没有长度，代表这个航道已有弹幕占领，需要看下一行的
-            if (temp != null && temp.getWidth() <= 0) {
-                continue;
+        if (simpleDanmuVo != null && simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.LEFT2RIGHT
+                && rightLineLastDanmuVoArray == null || rightLineLastDanmuVoArray.size() == 0) {
+            return 0;
+        }
+        if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.RIGHT2LEFT) {
+            for (int i = 0; i < MAX_LINE_NUMS; i++) {
+                SimpleDanmuVo temp = rightLineLastDanmuVoArray.get(i);
+                // 没有宽度的弹幕是刚刚插入的，还没有绘制所有没有长度，代表这个航道已有弹幕占领，需要看下一行的
+                if (temp != null && temp.getWidth() <= 0) {
+                    continue;
+                }
+                if (temp == null || mWidth - temp.getPadding() > temp.getWidth()) {
+                    return i;
+                }
             }
-            if (temp == null || temp.getPadding() > temp.getWidth()) {
-                return i;
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.LEFT2RIGHT) {
+            for (int i = 0; i < MAX_LINE_NUMS; i++) {
+                SimpleDanmuVo temp = leftLineLastDanmuVoArray.get(i);
+                // 没有宽度的弹幕是刚刚插入的，还没有绘制所有没有长度，代表这个航道已有弹幕占领，需要看下一行的
+                if (temp != null && temp.getWidth() <= 0) {
+                    continue;
+                }
+                if (temp == null || temp.getPadding() > temp.getWidth()) {
+                    return i;
+                }
+            }
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.TOP){
+            for (int i = 0; i < MAX_LINE_NUMS / 3; i++) {
+                SimpleDanmuVo temp = topLineLastDanmuVoArray.get(i);
+                if (temp == null) {
+                    return i;
+                }
+            }
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.CENTER){
+            for (int i = MAX_LINE_NUMS / 3; i < 2 * MAX_LINE_NUMS / 3; i++) {
+                SimpleDanmuVo temp = centerLineLastDanmuVoArray.get(i);
+                if (temp == null) {
+                    return i;
+                }
+            }
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.BOTTOM){
+            for (int i = 2 * MAX_LINE_NUMS / 3; i < MAX_LINE_NUMS; i++) {
+                SimpleDanmuVo temp = bottomLineLastDanmuVoArray.get(i);
+                if (temp == null) {
+                    return i;
+                }
             }
         }
         return -1;

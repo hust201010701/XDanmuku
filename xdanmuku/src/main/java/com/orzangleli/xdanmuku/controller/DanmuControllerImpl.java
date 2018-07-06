@@ -28,7 +28,10 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
     // 工作中的弹幕
     private volatile LinkedList<SimpleDanmuVo> mWorkingDanmuList;
     // 每行航道的最后一个弹幕
-    private volatile SparseArray<SimpleDanmuVo> mLineLastDanmuVoArray;
+    private volatile SparseArray<SimpleDanmuVo> mLeftLineLastDanmuVoArray, mRightLineLastDanmuVoArray;
+
+    private volatile SparseArray<SimpleDanmuVo> mTopLineLastDanmuVoArray, mCenterLineLastDanmuVoArray, mBottomLineLastDanmuVoArray;
+
 
     public DanmuControllerImpl() {
         init();
@@ -37,7 +40,11 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
     public void init() {
         mWaitingDanmuList = new PriorityBlockingQueue<>();
         mWorkingDanmuList = new LinkedList<>();
-        mLineLastDanmuVoArray = new SparseArray<>();
+        mLeftLineLastDanmuVoArray = new SparseArray<>();
+        mRightLineLastDanmuVoArray = new SparseArray<>();
+        mTopLineLastDanmuVoArray = new SparseArray<>();
+        mCenterLineLastDanmuVoArray = new SparseArray<>();
+        mBottomLineLastDanmuVoArray = new SparseArray<>();
     }
 
     @Override
@@ -79,18 +86,8 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
     }
 
     @Override
-    public synchronized void removeLastItem(int pos) {
-        mLineLastDanmuVoArray.removeAt(pos);
-    }
-
-    @Override
     public synchronized void addWorkingItem(SimpleDanmuVo simpleDanmuVo) {
         mWorkingDanmuList.add(simpleDanmuVo);
-    }
-
-    @Override
-    public synchronized void putLastItem(int key, SimpleDanmuVo value) {
-        mLineLastDanmuVoArray.put(key, value);
     }
 
     @Override
@@ -104,13 +101,28 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
     }
 
     @Override
-    public void updateLineLastDanmuVo(SimpleDanmuVo simpleDanmuVo, int width) {
-        mLineLastDanmuVoArray.put(simpleDanmuVo.getLineNum(), getTheMoreRightDanmuVo(mLineLastDanmuVoArray.get(simpleDanmuVo.getLineNum()), simpleDanmuVo, width));
+    public SparseArray getRightLineLastDanmuVoArray() {
+        return mRightLineLastDanmuVoArray;
     }
 
     @Override
-    public SparseArray getLineLastDanmuVoArray() {
-        return mLineLastDanmuVoArray;
+    public SparseArray getLeftLineLastDanmuVoArray() {
+        return mLeftLineLastDanmuVoArray;
+    }
+
+    @Override
+    public SparseArray getTopLineLastDanmuVoArray() {
+        return mTopLineLastDanmuVoArray;
+    }
+
+    @Override
+    public SparseArray getCenterLineLastDanmuVoArray() {
+        return mCenterLineLastDanmuVoArray;
+    }
+
+    @Override
+    public SparseArray getBottomLineLastDanmuVoArray() {
+        return mBottomLineLastDanmuVoArray;
     }
 
     /**
@@ -139,6 +151,26 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
                 return simpleDanmuVo2;
             }
         }
+    }
+
+    @Override
+    public SparseArray getLastDanmuVoArrayByVo(SimpleDanmuVo simpleDanmuVo) {
+        if (simpleDanmuVo == null) {
+            return null;
+        }
+        SparseArray sparseArray = null;
+        if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.RIGHT2LEFT) {
+            sparseArray = getRightLineLastDanmuVoArray();
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.LEFT2RIGHT) {
+            sparseArray = getLeftLineLastDanmuVoArray();
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.BOTTOM) {
+            sparseArray = getBottomLineLastDanmuVoArray();
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.TOP) {
+            sparseArray = getTopLineLastDanmuVoArray();
+        } else if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.CENTER) {
+            sparseArray = getCenterLineLastDanmuVoArray();
+        }
+        return sparseArray;
     }
 
 }

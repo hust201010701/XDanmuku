@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
-import android.os.Message;
 import android.support.annotation.NonNull;
 
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
@@ -63,6 +62,10 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     // 弹幕行为, 默认从右到左
     private Behavior mBehavior = Behavior.RIGHT2LEFT;
 
+    private Paint.FontMetricsInt mDefaultFontMetricsInt;
+
+    private Path mPath;
+
     /**
      * 弹幕行为 支持从右到左，从左到右，顶部悬停，中间悬停，底部悬停
      */
@@ -115,6 +118,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mWidth = 0;
         simpleDanmuVo.mBorderColor = borderColor;
         simpleDanmuVo.mBehavior = Behavior.RIGHT2LEFT;
+        simpleDanmuVo.mPath = new Path();
         return simpleDanmuVo;
     }
 
@@ -204,22 +208,33 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         if (mDanmuPaint == null) {
             if (mDefaultPaint == null) {
                 mDefaultPaint = new Paint();
-                mDefaultPaint.setAntiAlias(true);
-                mDefaultPaint.setTextSize(mDanmuTextSize);
-                mDefaultPaint.setColor(mDanmuColor);
             }
+            mDefaultPaint.setAntiAlias(true);
+            mDefaultPaint.setTextSize(mDanmuTextSize);
+            mDefaultPaint.setColor(mDanmuColor);
             return mDefaultPaint;
         }
-        return mDefaultPaint;
+        return mDanmuPaint;
+    }
+
+    public Paint.FontMetricsInt getFontMetrics() {
+        if (mDefaultFontMetricsInt == null) {
+            Paint danmuPaint = getDanmuPaint();
+            if (danmuPaint != null) {
+                mDefaultFontMetricsInt = danmuPaint.getFontMetricsInt();
+                return mDefaultFontMetricsInt;
+            }
+        }
+        return mDefaultFontMetricsInt;
     }
 
     public Paint getBorderPaint() {
         if (mBorderPaint == null) {
             mBorderPaint = new Paint();
-            mBorderPaint.setAntiAlias(true);
-            mBorderPaint.setStyle(Paint.Style.STROKE);
-            mBorderPaint.setStrokeWidth(BORDER_WIDTH);
         }
+        mBorderPaint.setAntiAlias(true);
+        mBorderPaint.setStyle(Paint.Style.STROKE);
+        mBorderPaint.setStrokeWidth(BORDER_WIDTH);
         if (mBorderColor != -1) {
             mBorderPaint.setColor(mBorderColor);
         }
@@ -264,11 +279,13 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         if (canvas == null || this.getContent() == null || "".equals(this.getContent())) {
             return;
         }
-        mWidth = (int)(this.getDanmuPaint().measureText(this.getContent()) + 0.5f);
+//        mWidth = (int)(this.getDanmuPaint().measureText(this.getContent()) + 0.5f);
         int laneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
 
         Rect bounds = new Rect();
-        this.getDanmuPaint().getTextBounds(this.getContent(), 0, this.getContent().length(), bounds);
+        Paint danmuPaint = this.getDanmuPaint();
+        danmuPaint.getTextBounds(this.getContent(), 0, this.getContent().length(), bounds);
+        mWidth = bounds.width();
         float x = 0, y = 0;
         if (mBehavior == Behavior.RIGHT2LEFT) {
             x = this.getPadding();
@@ -276,19 +293,22 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
             x = this.getPadding() - mWidth;
         }
         y = (laneHeight + 0.5f) * getLineNum() - bounds.height() / 2;
-        canvas.drawText(this.getContent(), x, y, this.getDanmuPaint());
+        canvas.drawText(this.getContent(), x, y, danmuPaint);
 
-        Paint.FontMetricsInt fontMetrics = this.getDanmuPaint().getFontMetricsInt();
+        Paint.FontMetricsInt fontMetrics = getFontMetrics();
+        if (fontMetrics == null) {
+            return;
+        }
         float bottomPadding = fontMetrics.bottom - fontMetrics.top - bounds.height();
         float leftPadding = 20;
         if (this.getBorderColor() != -1) {
-            Path path = new Path();
-            path.moveTo(x - leftPadding, y + bottomPadding);
-            path.lineTo(x + bounds.width() + leftPadding, y + bottomPadding);
-            path.lineTo(x + bounds.width() + leftPadding, y - bounds.height());
-            path.lineTo(x - leftPadding, y - bounds.height());
-            path.lineTo(x - leftPadding, y + bottomPadding);
-            canvas.drawPath(path, getBorderPaint());
+            mPath.reset();
+            mPath.moveTo(x - leftPadding, y + bottomPadding);
+            mPath.lineTo(x + bounds.width() + leftPadding, y + bottomPadding);
+            mPath.lineTo(x + bounds.width() + leftPadding, y - bounds.height());
+            mPath.lineTo(x - leftPadding, y - bounds.height());
+            mPath.lineTo(x - leftPadding, y + bottomPadding);
+            canvas.drawPath(mPath, getBorderPaint());
         }
     }
 

@@ -125,8 +125,8 @@ public class XDanmukuView2 extends View implements IDanmukuView {
     }
 
     public void drawDanmukusOnBak(Canvas canvas) {
-        // 清除画布
-        clearCanvas(canvas);
+//        // 清除画布
+//        clearCanvas(canvas);
         // 绘制航道
         if (mIsDebug) {
             drawLane(canvas);

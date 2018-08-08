@@ -9,6 +9,7 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
+import com.orzangleli.xdanmuku.util.XUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -264,11 +265,10 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         if (canvas == null || this.getContent() == null || "".equals(this.getContent())) {
             return;
         }
-        mWidth = (int)(this.getDanmuPaint().measureText(this.getContent()) + 0.5f);
+        mWidth = XUtils.measureTextApproximately(getDanmuPaint().getTextSize(), this.getContent().length());
         int laneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
 
-        Rect bounds = new Rect();
-        this.getDanmuPaint().getTextBounds(this.getContent(), 0, this.getContent().length(), bounds);
+        Rect bounds = XUtils.getTextBoundsApproximately(this.getDanmuPaint().getTextSize(), this.getContent().length());
         float x = 0, y = 0;
         if (mBehavior == Behavior.RIGHT2LEFT) {
             x = this.getPadding();

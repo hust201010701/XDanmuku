@@ -1,5 +1,7 @@
 package com.orzangleli.xdanmuku.util;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Rect;
 
 /**
@@ -29,6 +31,11 @@ public class XUtils {
         return (int) ((paintSize + 4) * textLength);
     }
 
+    public static void clearBitmap(Bitmap bitmap) {
+        if (bitmap != null && !bitmap.isRecycled()) {
+            bitmap.eraseColor(Color.TRANSPARENT);
+        }
+    }
 
 
 

@@ -1,5 +1,6 @@
 package com.orzangleli.xdanmuku.vo;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -42,6 +43,9 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private int mPadding = Integer.MIN_VALUE;
     // 弹幕长度
     private int mWidth = 0;
+    // 弹幕高度
+    private int mHeight = 0;
+
     // 弹幕速度
     private int mSpeed;
     // 业务弹幕数据类型
@@ -66,6 +70,8 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private Paint.FontMetricsInt mDefaultFontMetricsInt;
 
     private Path mPath;
+
+    private Bitmap mCacheBitmap;
 
     /**
      * 弹幕行为 支持从右到左，从左到右，顶部悬停，中间悬停，底部悬停
@@ -120,6 +126,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mBorderColor = borderColor;
         simpleDanmuVo.mBehavior = Behavior.RIGHT2LEFT;
         simpleDanmuVo.mPath = new Path();
+        XUtils.clearBitmap(simpleDanmuVo.mCacheBitmap);
         return simpleDanmuVo;
     }
 
@@ -276,38 +283,68 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     }
 
     // 内置的绘制弹幕的方法
+
+    /**
+     * 绘制弹幕的终极技能：
+     * 第一次使用drawText绘制这个文本，并保存在一个bitmap中
+     * 之后的移动都只需要绘制这个bitmao即可。
+     * @param canvas
+     * @param width
+     * @param height
+     */
     public void drawDanmukusInternal(Canvas canvas, int width, int height) {
         if (canvas == null || this.getContent() == null || "".equals(this.getContent())) {
             return;
         }
-        mWidth = XUtils.measureTextApproximately(getDanmuPaint().getTextSize(), this.getContent().length());
+
         int laneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
 
-        Rect bounds = XUtils.getTextBoundsApproximately(this.getDanmuPaint().getTextSize(), this.getContent().length());
         float x = 0, y = 0;
         if (mBehavior == Behavior.RIGHT2LEFT) {
             x = this.getPadding();
         } else if (mBehavior == Behavior.LEFT2RIGHT){
             x = this.getPadding() - mWidth;
         }
-        y = (laneHeight + 0.5f) * getLineNum() - bounds.height() / 2;
-        canvas.drawText(this.getContent(), x, y, this.getDanmuPaint());
+        y = laneHeight * getLineNum();
 
-        Paint.FontMetricsInt fontMetrics = getFontMetrics();
-        if (fontMetrics == null) {
-            return;
+        if (mCacheBitmap == null) {
+            Rect bounds = XUtils.getTextBoundsApproximately(this.getDanmuPaint().getTextSize(), this.getContent().length());
+            mWidth = bounds.width();
+            mHeight = bounds.height();
+
+            // fixme 不要使用固定的 laneHeight， 可以根据文字大小，自行设置宽度，但是需要注意取对应的缓存
+            mCacheBitmap = Bitmap.createBitmap(mWidth, laneHeight, Bitmap.Config.ARGB_8888);
+            Canvas innerCanvas = new Canvas(mCacheBitmap);
+
+            Paint.FontMetricsInt fontMetrics = getFontMetrics();
+            if (fontMetrics == null) {
+                return;
+            }
+
+            int yPos = (laneHeight - mHeight) / 2 + Math.abs(fontMetrics.ascent + fontMetrics.leading);
+
+//            innerCanvas.drawColor(Color.RED);
+
+            innerCanvas.drawText(this.getContent(), 0, yPos, this.getDanmuPaint());
+
+            if (this.getBorderColor() != -1) {
+                mPath.reset();
+                mPath.moveTo(0, 0);
+                mPath.lineTo(mWidth, 0);
+                mPath.lineTo(mWidth, mHeight);
+                mPath.lineTo(0, mHeight);
+                mPath.lineTo(0, 0);
+                canvas.drawPath(mPath, getBorderPaint());
+            }
         }
-        float bottomPadding = fontMetrics.bottom - fontMetrics.top - bounds.height();
-        float leftPadding = 20;
-        if (this.getBorderColor() != -1) {
-            mPath.reset();
-            mPath.moveTo(x - leftPadding, y + bottomPadding);
-            mPath.lineTo(x + bounds.width() + leftPadding, y + bottomPadding);
-            mPath.lineTo(x + bounds.width() + leftPadding, y - bounds.height());
-            mPath.lineTo(x - leftPadding, y - bounds.height());
-            mPath.lineTo(x - leftPadding, y + bottomPadding);
-            canvas.drawPath(mPath, getBorderPaint());
-        }
+
+        canvas.drawBitmap(mCacheBitmap, x, y, this.getDanmuPaint());
+    }
+
+    // TODO: 2018/8/8 调用此方法防止内存泄漏
+    public void destroy() {
+        mCacheBitmap.recycle();
+        mCacheBitmap = null;
     }
 
 }

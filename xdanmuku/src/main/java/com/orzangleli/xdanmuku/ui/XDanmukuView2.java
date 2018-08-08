@@ -106,9 +106,7 @@ public class XDanmukuView2 extends View implements IDanmukuView {
         super.onDraw(canvas);
         if (canvas != null) {
             // 清除画布
-//            clearCanvas(canvas);
             drawDanmukusOnBak(canvas);
-//            canvas.drawBitmap(mBakBitmap, 0, 0, mDanmukuPaint);
         }
     }
 
@@ -125,8 +123,6 @@ public class XDanmukuView2 extends View implements IDanmukuView {
     }
 
     public void drawDanmukusOnBak(Canvas canvas) {
-//        // 清除画布
-//        clearCanvas(canvas);
         // 绘制航道
         if (mIsDebug) {
             drawLane(canvas);
@@ -156,8 +152,8 @@ public class XDanmukuView2 extends View implements IDanmukuView {
     // 绘制弹幕航道
     private void drawLane(Canvas canvas) {
         int laneHeight = mHeight / DanmuEnqueueThread.MAX_LINE_NUMS;
-        int startColor = Color.parseColor("#CCCC00");
-        int endColor = Color.parseColor("#0066CC");
+        int startColor = Color.parseColor("#80CCCC00");
+        int endColor = Color.parseColor("#800066CC");
         Paint paint = new Paint();
         paint.setAntiAlias(true);
         for (int i = 0; i < DanmuEnqueueThread.MAX_LINE_NUMS; i++) {

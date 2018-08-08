@@ -33,7 +33,7 @@ public class DanmuActivity extends AppCompatActivity {
         setContentView(R.layout.activity_danmu);
 
         mXDanmukuView = this.findViewById(R.id.xdanmukuView);
-//        mXDanmukuView.setDebug(true);
+        mXDanmukuView.setDebug(true);
 
         mXDanmukuView.setOnClickListener(new View.OnClickListener() {
             @Override

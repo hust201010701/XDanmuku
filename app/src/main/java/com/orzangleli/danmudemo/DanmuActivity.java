@@ -41,25 +41,25 @@ public class DanmuActivity extends AppCompatActivity {
                 SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu(), Color.BLUE);
                 simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
                 simpleDanmuVo.setDanmuColor(getRandomColor());
-                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);
-                simpleDanmuVo.setBehavior(SimpleDanmuVo.Behavior.LEFT2RIGHT);
+                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(80) + 10);
+                simpleDanmuVo.setBehavior(SimpleDanmuVo.Behavior.RIGHT2LEFT);
                 mXDanmukuView.enqueue(simpleDanmuVo);
             }
         });
 
-        startFakeDanmu();
+//        startFakeDanmu();
 
-        DyDanmuManager.getInstance().init(ROOM_ID, new IReceiveDanmu() {
-            @Override
-            public void receive(String name, String content) {
-//                Log.i("lxc", name + " : " +content);
-                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(name + " : " + content, Color.GREEN);
-                simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
-                simpleDanmuVo.setDanmuColor(getRandomColor());
-                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);
-                mXDanmukuView.enqueue(simpleDanmuVo);
-            }
-        });
+//        DyDanmuManager.getInstance().init(ROOM_ID, new IReceiveDanmu() {
+//            @Override
+//            public void receive(String name, String content) {
+////                Log.i("lxc", name + " : " +content);
+//                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(name + " : " + content, Color.GREEN);
+//                simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
+//                simpleDanmuVo.setDanmuColor(getRandomColor());
+//                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(30) + 60);
+//                mXDanmukuView.enqueue(simpleDanmuVo);
+//            }
+//        });
 
 
     }
@@ -72,7 +72,7 @@ public class DanmuActivity extends AppCompatActivity {
                     SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu());
                     simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
                     simpleDanmuVo.setDanmuColor(getRandomColor());
-                    simpleDanmuVo.setDanmuTextSize(new Random().nextInt(20) + 30);
+                    simpleDanmuVo.setDanmuTextSize(new Random().nextInt(30) + 60);
                     mXDanmukuView.enqueue(simpleDanmuVo);
                     try {
                         Thread.sleep(100);

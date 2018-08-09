@@ -133,11 +133,11 @@ public class DanmuEnqueueThread extends Thread {
                            SparseArray<SimpleDanmuVo> centerLineLastDanmuVoArray,
                            SparseArray<SimpleDanmuVo> bottomLineLastDanmuVoArray) {
         if (simpleDanmuVo != null && simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.RIGHT2LEFT
-                && (leftLineLastDanmuVoArray == null || leftLineLastDanmuVoArray.size() == 0)) {
+                && (rightLineLastDanmuVoArray == null || rightLineLastDanmuVoArray.size() == 0)) {
             return 0;
         }
         if (simpleDanmuVo != null && simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.LEFT2RIGHT
-                && rightLineLastDanmuVoArray == null || rightLineLastDanmuVoArray.size() == 0) {
+                && (leftLineLastDanmuVoArray == null || leftLineLastDanmuVoArray.size() == 0)) {
             return 0;
         }
         if (simpleDanmuVo.getBehavior() == SimpleDanmuVo.Behavior.RIGHT2LEFT) {

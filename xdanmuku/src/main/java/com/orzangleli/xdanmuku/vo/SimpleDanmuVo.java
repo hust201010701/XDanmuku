@@ -3,6 +3,7 @@ package com.orzangleli.xdanmuku.vo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
@@ -34,6 +35,8 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private static final int PRIORITY_LOW = 1;
     private static final int PRIORITY_NORMAL = 2;
     private static final int PRIORITY_HIGH = 3;
+
+    private final int DEFAULT_PADDING = 10;
 
     // 弹幕优先级
     private int mPriority;
@@ -73,6 +76,8 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
 
     private Bitmap mCacheBitmap;
 
+    private Bitmap mFirstShowBitmap;
+
     /**
      * 弹幕行为 支持从右到左，从左到右，顶部悬停，中间悬停，底部悬停
      */
@@ -84,7 +89,6 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         CENTER,
         CUSTOM
     }
-
 
 
     private static final Object sPoolSync = new Object();
@@ -126,6 +130,8 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mBorderColor = borderColor;
         simpleDanmuVo.mBehavior = Behavior.RIGHT2LEFT;
         simpleDanmuVo.mPath = new Path();
+        simpleDanmuVo.mCacheBitmap = simpleDanmuVo.mFirstShowBitmap;
+        simpleDanmuVo.mFirstShowBitmap = null;
         XUtils.clearBitmap(simpleDanmuVo.mCacheBitmap);
         return simpleDanmuVo;
     }
@@ -249,6 +255,10 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         return mBorderPaint;
     }
 
+    public int getBorderStrokeWidth() {
+        return (int) getBorderPaint().getStrokeWidth();
+    }
+
     public void setDanmuPaint(Paint mDanmuPaint) {
         this.mDanmuPaint = mDanmuPaint;
     }
@@ -287,7 +297,8 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     /**
      * 绘制弹幕的终极技能：
      * 第一次使用drawText绘制这个文本，并保存在一个bitmap中
-     * 之后的移动都只需要绘制这个bitmao即可。
+     * 之后的移动都只需要绘制这个bitmap即可。
+     *
      * @param canvas
      * @param width
      * @param height
@@ -299,52 +310,113 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
 
         int laneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
 
+        if (mWidth == 0 && mHeight == 0) {
+            Rect bounds = new Rect();
+            getDanmuPaint().getTextBounds(this.getContent(), 0, this.getContent().length(), bounds);
+            mWidth = bounds.width();
+        }
+
         float x = 0, y = 0;
         if (mBehavior == Behavior.RIGHT2LEFT) {
             x = this.getPadding();
-        } else if (mBehavior == Behavior.LEFT2RIGHT){
+        } else if (mBehavior == Behavior.LEFT2RIGHT) {
             x = this.getPadding() - mWidth;
         }
         y = laneHeight * getLineNum();
 
-        if (mCacheBitmap == null) {
-            Rect bounds = XUtils.getTextBoundsApproximately(this.getDanmuPaint().getTextSize(), this.getContent().length());
-            mWidth = bounds.width();
-            mHeight = bounds.height();
-
-            // fixme 不要使用固定的 laneHeight， 可以根据文字大小，自行设置宽度，但是需要注意取对应的缓存
-            mCacheBitmap = Bitmap.createBitmap(mWidth, laneHeight, Bitmap.Config.ARGB_8888);
-            Canvas innerCanvas = new Canvas(mCacheBitmap);
-
+        if (mFirstShowBitmap == null) {
             Paint.FontMetricsInt fontMetrics = getFontMetrics();
             if (fontMetrics == null) {
                 return;
             }
+            mHeight = Math.abs(fontMetrics.ascent + fontMetrics.leading) + fontMetrics.descent;
+            int bitmapHeight = 0;
+            boolean isOverLane;
+            if (mHeight > laneHeight) {
+                bitmapHeight = mHeight;
+                isOverLane = true;
+            } else {
+                bitmapHeight = laneHeight;
+                isOverLane = false;
+            }
+            // 如果上一个缓存的bitmap为空，那么重新创建一个bitmap
+            if (mCacheBitmap == null) {
+                mFirstShowBitmap = Bitmap.createBitmap(mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2, bitmapHeight + getBorderStrokeWidth() * 2, Bitmap.Config.ARGB_8888);
+            } else {
+                mFirstShowBitmap = createMatrixBitmap(mCacheBitmap, mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2, bitmapHeight + getBorderStrokeWidth() * 2);
+                mCacheBitmap.recycle();
+            }
 
-            int yPos = (laneHeight - mHeight) / 2 + Math.abs(fontMetrics.ascent + fontMetrics.leading);
+            Canvas innerCanvas = new Canvas(mFirstShowBitmap);
+            // 绘制弹幕
+            int yPos = 0;
+            if (isOverLane) {
+                yPos = Math.abs(fontMetrics.ascent + fontMetrics.leading);
+                // 绘制线框
+                if (this.getBorderColor() != -1) {
+                    int top = Math.max(getBorderStrokeWidth(), (laneHeight - mHeight) / 2 - getBorderStrokeWidth());
+                    int bottom = Math.min(bitmapHeight + getBorderStrokeWidth() , (laneHeight + mHeight) / 2 + getBorderStrokeWidth());
+                    int left = getBorderStrokeWidth();
+                    int right = mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2 - getBorderStrokeWidth();
 
-//            innerCanvas.drawColor(Color.RED);
-
-            innerCanvas.drawText(this.getContent(), 0, yPos, this.getDanmuPaint());
-
+                    mPath.reset();
+                    mPath.moveTo(left, top);
+                    mPath.lineTo(right, top);
+                    mPath.lineTo(right, bottom);
+                    mPath.lineTo(left, bottom);
+                    mPath.lineTo(left, top);
+                }
+            } else {
+                yPos = (laneHeight - mHeight) / 2 + Math.abs(fontMetrics.ascent + fontMetrics.leading);
+                // 绘制线框
+                if (this.getBorderColor() != -1) {
+                    int top = Math.max(getBorderStrokeWidth(), (laneHeight - mHeight) / 2 - getBorderStrokeWidth());
+                    int bottom = Math.min(bitmapHeight + getBorderStrokeWidth() , (laneHeight + mHeight) / 2 + getBorderStrokeWidth());
+                    int left = getBorderStrokeWidth();
+                    int right = mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2 - getBorderStrokeWidth();
+                    mPath.reset();
+                    mPath.moveTo(left, top);
+                    mPath.lineTo(right, top);
+                    mPath.lineTo(right, bottom);
+                    mPath.lineTo(left, bottom);
+                    mPath.lineTo(left, top);
+                }
+            }
+            innerCanvas.drawText(this.getContent(), DEFAULT_PADDING, yPos, this.getDanmuPaint());
+            // 绘制线框
             if (this.getBorderColor() != -1) {
-                mPath.reset();
-                mPath.moveTo(0, 0);
-                mPath.lineTo(mWidth, 0);
-                mPath.lineTo(mWidth, mHeight);
-                mPath.lineTo(0, mHeight);
-                mPath.lineTo(0, 0);
-                canvas.drawPath(mPath, getBorderPaint());
+                innerCanvas.drawPath(mPath, getBorderPaint());
             }
         }
 
-        canvas.drawBitmap(mCacheBitmap, x, y, this.getDanmuPaint());
+        canvas.drawBitmap(mFirstShowBitmap, x, y, this.getDanmuPaint());
     }
 
     // TODO: 2018/8/8 调用此方法防止内存泄漏
     public void destroy() {
-        mCacheBitmap.recycle();
+        if (mCacheBitmap != null && !mCacheBitmap.isRecycled()) {
+            mCacheBitmap.recycle();
+        }
+        if (mFirstShowBitmap != null && !mFirstShowBitmap.isRecycled()) {
+            mFirstShowBitmap.recycle();
+        }
         mCacheBitmap = null;
+        mFirstShowBitmap = null;
+    }
+
+    public Bitmap createMatrixBitmap(Bitmap bm, int newWidth, int newHeight) {
+        // 获得图片的宽高.
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        // 计算缩放比例.
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // 取得想要缩放的matrix参数.
+        Matrix matrix = new Matrix();
+        matrix.postScale(scaleWidth, scaleHeight);
+        // 得到新的图片.
+        Bitmap newbm = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, true);
+        return newbm;
     }
 
 }

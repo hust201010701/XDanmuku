@@ -3,20 +3,16 @@ package com.orzangleli.danmudemo;
 import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
-import com.orzangleli.douyu.DyDanmuManager;
-import com.orzangleli.douyu.client.IReceiveDanmu;
 import com.orzangleli.xdanmuku.ui.XDanmukuView;
-import com.orzangleli.xdanmuku.ui.XDanmukuView2;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.Random;
 
 public class DanmuActivity extends AppCompatActivity {
 
-    XDanmukuView2 mXDanmukuView;
+    XDanmukuView mXDanmukuView;
 
     private static final int CHEN_XIANG = 2132902;
     private static final int FENG_TI_MO = 71017;

@@ -3,8 +3,6 @@ package com.orzangleli.xdanmuku.controller;
 import android.util.SparseArray;
 
 import com.orzangleli.xdanmuku.ui.IDanmukuView;
-import com.orzangleli.xdanmuku.ui.XDanmukuView;
-import com.orzangleli.xdanmuku.ui.XDanmukuView2;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.List;

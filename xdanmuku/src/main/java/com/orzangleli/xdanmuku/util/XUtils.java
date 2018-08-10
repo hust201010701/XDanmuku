@@ -1,7 +1,9 @@
 package com.orzangleli.xdanmuku.util;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 
 /**
@@ -37,6 +39,10 @@ public class XUtils {
         }
     }
 
-
+    public static void clearCanvas(Canvas canvas) {
+        if (canvas != null) {
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        }
+    }
 
 }

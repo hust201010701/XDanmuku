@@ -3,8 +3,6 @@ package com.orzangleli.xdanmuku.controller;
 import android.util.Log;
 
 import com.orzangleli.xdanmuku.ui.IDanmukuView;
-import com.orzangleli.xdanmuku.ui.XDanmukuView;
-import com.orzangleli.xdanmuku.ui.XDanmukuView2;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.List;
@@ -53,7 +51,11 @@ public class DanmuMoveThread extends Thread {
                 costTime = mXDanmukuView.drawDanmukus();
             }
             try {
-                Thread.sleep(MOVE_INTERVAL_TIME_MILLS);
+                int leftTime = MOVE_INTERVAL_TIME_MILLS;
+                if (MOVE_INTERVAL_TIME_MILLS > costTime) {
+                    leftTime = (int) (MOVE_INTERVAL_TIME_MILLS - costTime);
+                }
+                Thread.sleep(leftTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

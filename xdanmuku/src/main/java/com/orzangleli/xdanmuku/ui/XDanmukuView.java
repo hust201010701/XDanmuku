@@ -1,25 +1,36 @@
 package com.orzangleli.xdanmuku.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.os.Handler;
+import android.os.Message;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.TextureView;
+import android.view.View;
+import android.widget.TextView;
 
 import com.orzangleli.xdanmuku.controller.DanmuController;
 import com.orzangleli.xdanmuku.controller.DanmuControllerImpl;
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
 import com.orzangleli.xdanmuku.controller.DanmuMoveThread;
+import com.orzangleli.xdanmuku.util.XUtils;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * <p>description：
@@ -48,6 +59,13 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     private int mWidth = -1, mHeight = -1;
 
+    private SurfaceHolder mHolder;
+
+    private Bitmap mBakBitmap;
+    private Canvas mBakCanvas;
+
+    public static final int MSG_UPDATE = 1;
+
     public XDanmukuView(Context context) {
         super(context);
         init(context);
@@ -65,10 +83,6 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     public void init(Context context) {
         initPaint();
-        setOpaque(false);
-        setWillNotCacheDrawing(true);
-        setDrawingCacheEnabled(false);
-        this.setSurfaceTextureListener(this);
 
         mDanmuController = new DanmuControllerImpl();
         mDanmuDrawerList = new ArrayList<>();
@@ -78,13 +92,10 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         mDanmuEnqueueThread.setDanmuController(this, mDanmuController);
         mDanmuEnqueueThread.start();
 
-        mDanmuMoveThread= new DanmuMoveThread();
+        mDanmuMoveThread = new DanmuMoveThread();
         mDanmuMoveThread.setName("DanmuMoveThread");
         mDanmuMoveThread.setDanmuController(this, mDanmuController);
         mDanmuMoveThread.start();
-        // 设置弹幕透明度
-//        this.setAlpha(1f);
-
     }
 
     private void initPaint() {
@@ -94,25 +105,36 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     }
 
     @Override
-    public synchronized long drawDanmukus() {
-        long startTime = System.currentTimeMillis();
-        mLastDrawTime = startTime;
-        if (mWidth <= 0 || mHeight <= 0) {
-            return System.currentTimeMillis() - startTime;
+    public void onDestroy() {
+        List<SimpleDanmuVo> workingList = mDanmuController.getWorkingList();
+        Queue<SimpleDanmuVo> waitingQueue = mDanmuController.getWaitingQueue();
+        if (workingList != null) {
+            for (int i = 0; i < workingList.size(); i++) {
+                SimpleDanmuVo simpleDanmuVo = workingList.remove(0);
+                if (simpleDanmuVo != null) {
+                    simpleDanmuVo.destroy();
+                    simpleDanmuVo = null;
+                }
+            }
         }
-        Canvas canvas = this.lockCanvas();
-        if (canvas != null) {
-            // 清除画布
-            clearCanvas(canvas);
-            drawDanmukusDirectly(canvas);
+        if (waitingQueue != null) {
+            for (int i = 0; i < waitingQueue.size(); i++) {
+                SimpleDanmuVo simpleDanmuVo = waitingQueue.peek();
+                if (simpleDanmuVo != null) {
+                    simpleDanmuVo.destroy();
+                    simpleDanmuVo = null;
+                }
+            }
         }
-        unlockCanvasAndPost(canvas);
-        return System.currentTimeMillis() - startTime;
     }
 
-    public void drawDanmukusDirectly(Canvas canvas) {
-        // 清除画布
-        clearCanvas(canvas);
+    public synchronized long drawDanmukus() {
+        Canvas canvas = this.lockCanvas();
+        if (canvas == null) {
+            return 0;
+        }
+        long startTime = SystemClock.elapsedRealtime();
+        XUtils.clearCanvas(canvas);
         // 绘制航道
         if (mIsDebug) {
             drawLane(canvas);
@@ -137,18 +159,21 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
                 }
             }
         }
+        unlockCanvasAndPost(canvas);
+        return SystemClock.elapsedRealtime() - startTime;
     }
 
     // 绘制弹幕航道
     private void drawLane(Canvas canvas) {
         int laneHeight = mHeight / DanmuEnqueueThread.MAX_LINE_NUMS;
-        int startColor = Color.parseColor("#CCCC00");
-        int endColor = Color.parseColor("#0066CC");
+        int startColor = Color.parseColor("#FFFF00");
+        int endColor = Color.parseColor("#009966");
         Paint paint = new Paint();
         paint.setAntiAlias(true);
         for (int i = 0; i < DanmuEnqueueThread.MAX_LINE_NUMS; i++) {
             int color = (endColor - startColor) * i / (DanmuEnqueueThread.MAX_LINE_NUMS - 1) + startColor;
             paint.setColor(color);
+            paint.setAlpha(128);
             canvas.drawRect(new Rect(0, i * laneHeight, mWidth, (i + 1) * laneHeight), paint);
         }
     }
@@ -164,22 +189,36 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        mWidth = MeasureSpec.getSize(widthMeasureSpec);
+        mHeight = MeasureSpec.getSize(heightMeasureSpec);
+        mDanmuEnqueueThread.setWidth(mWidth);
+        mDanmuMoveThread.setWidth(mWidth);
+        if (mBakBitmap != null) {
+            mBakBitmap.recycle();
+        }
+        mBakBitmap = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
+        if (mBakCanvas != null) {
+            mBakCanvas.setBitmap(mBakBitmap);
+        } else {
+            mBakCanvas = new Canvas(mBakBitmap);
+        }
+    }
+
+    @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        Log.d("lxc", "onSurfaceTextureAvailable() called with: surface = [" + surface + "], width = [" + width + "], height = [" + height + "]");
         mWidth = width;
         mHeight = height;
         mDanmuEnqueueThread.setWidth(mWidth);
-        Log.i("lxc", "mWidth ---> " + mWidth);
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        Log.d("lxc", "onSurfaceTextureSizeChanged() called with: surface = [" + surface + "], width = [" + width + "], height = [" + height + "]");
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        Log.d("lxc", "onSurfaceTextureDestroyed() called with: surface = [" + surface + "]");
         return false;
     }
 

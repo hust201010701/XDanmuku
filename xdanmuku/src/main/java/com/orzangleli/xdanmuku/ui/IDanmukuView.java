@@ -14,4 +14,5 @@ package com.orzangleli.xdanmuku.ui;
 
 public interface IDanmukuView {
     long drawDanmukus();
+    void onDestroy();
 }

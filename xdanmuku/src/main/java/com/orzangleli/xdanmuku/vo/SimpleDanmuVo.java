@@ -127,6 +127,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mPadding = Integer.MIN_VALUE;
         simpleDanmuVo.mLineNum = -1;
         simpleDanmuVo.mWidth = 0;
+        simpleDanmuVo.mHeight = 0;
         simpleDanmuVo.mBorderColor = borderColor;
         simpleDanmuVo.mBehavior = Behavior.RIGHT2LEFT;
         simpleDanmuVo.mPath = new Path();
@@ -310,10 +311,11 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
 
         int laneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
 
-        if (mWidth == 0 && mHeight == 0) {
+        if (mWidth == 0 || mHeight == 0) {
             Rect bounds = new Rect();
             getDanmuPaint().getTextBounds(this.getContent(), 0, this.getContent().length(), bounds);
             mWidth = bounds.width();
+            mHeight = bounds.height();
         }
 
         float x = 0, y = 0;
@@ -329,7 +331,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
             if (fontMetrics == null) {
                 return;
             }
-            mHeight = Math.abs(fontMetrics.ascent + fontMetrics.leading) + fontMetrics.descent;
+//            mHeight = fontMetrics.descent - fontMetrics.ascent;
             int bitmapHeight = 0;
             boolean isOverLane;
             if (mHeight > laneHeight) {

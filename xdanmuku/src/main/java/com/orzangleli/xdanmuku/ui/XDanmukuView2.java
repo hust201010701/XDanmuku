@@ -24,10 +24,12 @@ import com.orzangleli.xdanmuku.controller.DanmuController;
 import com.orzangleli.xdanmuku.controller.DanmuControllerImpl;
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
 import com.orzangleli.xdanmuku.controller.DanmuMoveThread;
+import com.orzangleli.xdanmuku.util.XUtils;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * <p>description：
@@ -89,7 +91,7 @@ public class XDanmukuView2 extends View implements IDanmukuView {
         mDanmuEnqueueThread.setDanmuController(this, mDanmuController);
         mDanmuEnqueueThread.start();
 
-        mDanmuMoveThread= new DanmuMoveThread();
+        mDanmuMoveThread = new DanmuMoveThread();
         mDanmuMoveThread.setName("DanmuMoveThread");
         mDanmuMoveThread.setDanmuController(this, mDanmuController);
         mDanmuMoveThread.start();
@@ -114,12 +116,37 @@ public class XDanmukuView2 extends View implements IDanmukuView {
      * 之前出现 闪烁的原因找到了：
      * 1. 之前的做法： 先清屏，再把新的弹幕绘制到屏幕上
      * 2. 现在的做法： 先把弹幕绘制到bakBitmap上，然后再清屏，再把bakBitmap绘制到屏幕上
+     *
      * @return
      */
     @Override
     public synchronized long drawDanmukus() {
         mHandler.obtainMessage(MSG_UPDATE).sendToTarget();
         return 0;
+    }
+
+    @Override
+    public void onDestroy() {
+        List<SimpleDanmuVo> workingList = mDanmuController.getWorkingList();
+        Queue<SimpleDanmuVo> waitingQueue = mDanmuController.getWaitingQueue();
+        if (workingList != null) {
+            for (int i = 0; i < workingList.size(); i++) {
+                SimpleDanmuVo simpleDanmuVo = workingList.remove(0);
+                if (simpleDanmuVo != null) {
+                    simpleDanmuVo.destroy();
+                    simpleDanmuVo = null;
+                }
+            }
+        }
+        if (waitingQueue != null) {
+            for (int i = 0; i < waitingQueue.size(); i++) {
+                SimpleDanmuVo simpleDanmuVo = waitingQueue.peek();
+                if (simpleDanmuVo != null) {
+                    simpleDanmuVo.destroy();
+                    simpleDanmuVo = null;
+                }
+            }
+        }
     }
 
     public void drawDanmukusOnBak(Canvas canvas) {
@@ -191,7 +218,7 @@ public class XDanmukuView2 extends View implements IDanmukuView {
         }
     }
 
-    public Handler mHandler = new Handler (){
+    public Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);

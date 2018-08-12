@@ -15,6 +15,7 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
@@ -54,6 +55,8 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     private DanmuMoveThread mDanmuMoveThread;
     private boolean mIsDebug = false;
     private long mDrawCostTime = 0;
+    private TouchHelper mTouchHelper;
+    private TouchHelper.OnClickDanmuListener mOnClickDanmuListener;
 
     private long mLastDrawTime = 0;
 
@@ -84,6 +87,8 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     public void init(Context context) {
         initPaint();
 
+        mTouchHelper = new TouchHelper(this, context);
+
         mDanmuController = new DanmuControllerImpl();
         mDanmuDrawerList = new ArrayList<>();
 
@@ -102,6 +107,12 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         mDanmukuPaint = new Paint();
         mClearPaint = new Paint();
         mClearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean isConsumed = mTouchHelper.onTouchEvent(event);
+        return isConsumed ? true : super.onTouchEvent(event);
     }
 
     @Override
@@ -126,6 +137,11 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
                 }
             }
         }
+    }
+
+    @Override
+    public DanmuController getDanmuController() {
+        return mDanmuController;
     }
 
     public synchronized long drawDanmukus() {
@@ -248,5 +264,10 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     public long getDrawCostTime() {
         return mDrawCostTime;
+    }
+
+    public void setOnClickDanmuListener(TouchHelper.OnClickDanmuListener onClickDanmuListener) {
+        this.mOnClickDanmuListener = onClickDanmuListener;
+        mTouchHelper.setOnClickDanmuListener(onClickDanmuListener);
     }
 }

@@ -1,5 +1,7 @@
 package com.orzangleli.xdanmuku.ui;
 
+import com.orzangleli.xdanmuku.controller.DanmuController;
+
 /**
  * <p>description：
  * <p>===============================
@@ -15,4 +17,5 @@ package com.orzangleli.xdanmuku.ui;
 public interface IDanmukuView {
     long drawDanmukus();
     void onDestroy();
+    DanmuController getDanmuController();
 }

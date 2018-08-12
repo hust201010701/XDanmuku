@@ -78,6 +78,8 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
 
     private Bitmap mFirstShowBitmap;
 
+    private float x = 0, y = 0;
+
     /**
      * 弹幕行为 支持从右到左，从左到右，顶部悬停，中间悬停，底部悬停
      */
@@ -276,6 +278,10 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         return mWidth;
     }
 
+    public int getHeight() {
+        return mHeight;
+    }
+
     public void setWidth(int mWidth) {
         this.mWidth = mWidth;
     }
@@ -318,7 +324,6 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
             mHeight = bounds.height();
         }
 
-        float x = 0, y = 0;
         if (mBehavior == Behavior.RIGHT2LEFT) {
             x = this.getPadding();
         } else if (mBehavior == Behavior.LEFT2RIGHT) {
@@ -421,4 +426,11 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         return newbm;
     }
 
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
 }

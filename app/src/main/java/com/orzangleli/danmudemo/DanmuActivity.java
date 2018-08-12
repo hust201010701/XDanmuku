@@ -1,10 +1,13 @@
 package com.orzangleli.danmudemo;
 
 import android.graphics.Color;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
+import com.orzangleli.xdanmuku.ui.TouchHelper;
 import com.orzangleli.xdanmuku.ui.XDanmukuView;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
@@ -40,6 +43,27 @@ public class DanmuActivity extends AppCompatActivity {
                 simpleDanmuVo.setDanmuTextSize(new Random().nextInt(80) + 10);
                 simpleDanmuVo.setBehavior(SimpleDanmuVo.Behavior.RIGHT2LEFT);
                 mXDanmukuView.enqueue(simpleDanmuVo);
+            }
+        });
+
+        mXDanmukuView.setOnClickDanmuListener(new TouchHelper.OnClickDanmuListener() {
+            @Override
+            public void onClickDanmu(@Nullable SimpleDanmuVo simpleDanmuVo) {
+                if (simpleDanmuVo == null) {
+                    SimpleDanmuVo simpleDanmuVo2 = SimpleDanmuVo.obtain(getRandomDanmu(), Color.BLUE);
+                    simpleDanmuVo2.setSpeed(new Random().nextInt(2) + 3);
+                    simpleDanmuVo2.setDanmuColor(getRandomColor());
+                    simpleDanmuVo2.setDanmuTextSize(new Random().nextInt(80) + 10);
+                    simpleDanmuVo2.setBehavior(SimpleDanmuVo.Behavior.RIGHT2LEFT);
+                    mXDanmukuView.enqueue(simpleDanmuVo2);
+                } else {
+                    Log.i("lxc", " ---> " +simpleDanmuVo.getContent());
+                }
+            }
+
+            @Override
+            public void onLongClickDanmu(@Nullable SimpleDanmuVo simpleDanmuVo) {
+
             }
         });
 

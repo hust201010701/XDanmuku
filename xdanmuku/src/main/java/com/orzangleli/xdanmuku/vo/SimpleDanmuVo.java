@@ -6,7 +6,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.NonNull;
 
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
@@ -42,8 +42,8 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private int mPriority;
     // 弹幕所在的航道
     private int mLineNum = -1;
-    // 弹幕距离右边屏幕的距离
-    private int mPadding = Integer.MIN_VALUE;
+    // 弹幕距离左边屏幕的距离
+    private int mLeftPadding = Integer.MIN_VALUE;
     // 弹幕长度
     private int mWidth = 0;
     // 弹幕高度
@@ -79,6 +79,14 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private Bitmap mFirstShowBitmap;
 
     private float x = 0, y = 0;
+    
+    private int mLaneHeight;
+
+    private int mSpaceWidth;
+
+    private float mTextWidth, mTextHeight;
+
+    RectF boundsPath;
 
     /**
      * 弹幕行为 支持从右到左，从左到右，顶部悬停，中间悬停，底部悬停
@@ -110,15 +118,40 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     }
 
     public static SimpleDanmuVo obtain(String content, int speed, int danmuColor, int danmuTextSize, Paint danmuPaint, Object data, int priority, int borderColor) {
-        SimpleDanmuVo simpleDanmuVo = null;
-        synchronized (sPoolSync) {
-            if (sPool != null && sPool.size() > 0) {
-                simpleDanmuVo = sPool.remove(0);
-            }
-        }
-        if (simpleDanmuVo == null) {
-            simpleDanmuVo = new SimpleDanmuVo();
-        }
+//        SimpleDanmuVo simpleDanmuVo = null;
+//        synchronized (sPoolSync) {
+//            if (sPool != null && sPool.size() > 0) {
+//                simpleDanmuVo = sPool.remove(0);
+//            }
+//        }
+//        if (simpleDanmuVo == null) {
+//            simpleDanmuVo = new SimpleDanmuVo();
+//        }
+//        simpleDanmuVo.mContent = content;
+//        simpleDanmuVo.mSpeed = speed;
+//        simpleDanmuVo.mDanmuColor = danmuColor;
+//        simpleDanmuVo.mDanmuTextSize = danmuTextSize;
+//        simpleDanmuVo.mDanmuPaint = danmuPaint;
+//        simpleDanmuVo.mData = data;
+//        simpleDanmuVo.mPriority = priority;
+//        simpleDanmuVo.mLeftPadding = Integer.MIN_VALUE;
+//        simpleDanmuVo.mLineNum = -1;
+//        simpleDanmuVo.mWidth = 0;
+//        simpleDanmuVo.mHeight = 0;
+//        simpleDanmuVo.mBorderColor = borderColor;
+//        simpleDanmuVo.mBehavior = Behavior.RIGHT2LEFT;
+//        if (simpleDanmuVo.mPath != null) {
+//            simpleDanmuVo.mPath.reset();
+//        } else {
+//            simpleDanmuVo.mPath = new Path();
+//        }
+//        simpleDanmuVo.mCacheBitmap = null;
+//        simpleDanmuVo.mFirstShowBitmap = null;
+//        simpleDanmuVo.x = 0;
+//        simpleDanmuVo.y = 0;
+//        return simpleDanmuVo;
+
+        SimpleDanmuVo simpleDanmuVo = new SimpleDanmuVo();
         simpleDanmuVo.mContent = content;
         simpleDanmuVo.mSpeed = speed;
         simpleDanmuVo.mDanmuColor = danmuColor;
@@ -126,7 +159,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mDanmuPaint = danmuPaint;
         simpleDanmuVo.mData = data;
         simpleDanmuVo.mPriority = priority;
-        simpleDanmuVo.mPadding = Integer.MIN_VALUE;
+        simpleDanmuVo.mLeftPadding = Integer.MIN_VALUE;
         simpleDanmuVo.mLineNum = -1;
         simpleDanmuVo.mWidth = 0;
         simpleDanmuVo.mHeight = 0;
@@ -136,6 +169,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         simpleDanmuVo.mCacheBitmap = simpleDanmuVo.mFirstShowBitmap;
         simpleDanmuVo.mFirstShowBitmap = null;
         XUtils.clearBitmap(simpleDanmuVo.mCacheBitmap);
+        simpleDanmuVo.mSpaceWidth = 15;
         return simpleDanmuVo;
     }
 
@@ -159,12 +193,12 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         this.mLineNum = mLineNum;
     }
 
-    public int getPadding() {
-        return mPadding;
+    public int getLeftPadding() {
+        return mLeftPadding;
     }
 
     public synchronized void setPadding(int mPadding) {
-        this.mPadding = mPadding;
+        this.mLeftPadding = mPadding;
     }
 
     public int getSpeed() {
@@ -314,89 +348,82 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         if (canvas == null || this.getContent() == null || "".equals(this.getContent())) {
             return;
         }
-
-        int laneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
-
+        
+        mLaneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
+        Paint.FontMetricsInt fontMetrics = getFontMetrics();
+        float padding = getBorderStrokeWidth();
         if (mWidth == 0 || mHeight == 0) {
-            Rect bounds = new Rect();
-            getDanmuPaint().getTextBounds(this.getContent(), 0, this.getContent().length(), bounds);
-            mWidth = bounds.width();
-            mHeight = bounds.height();
+            Path textPath = new Path();
+            getDanmuPaint().getTextPath(this.getContent(), 0, this.getContent().length(), 0.0f, 0.0f, textPath);
+            boundsPath = new RectF();
+            textPath.computeBounds(boundsPath, true);
+
+            mTextWidth = boundsPath.width();
+            mTextHeight = boundsPath.height();
+
+            mWidth = (int) (mTextWidth + 2 * mSpaceWidth);
+            // 这里不适用bounds的height，因为测量可能不准确
+            mHeight = (int) (mTextHeight + 2 * mSpaceWidth);
         }
 
         if (mBehavior == Behavior.RIGHT2LEFT) {
-            x = this.getPadding();
+            x = this.getLeftPadding();
         } else if (mBehavior == Behavior.LEFT2RIGHT) {
-            x = this.getPadding() - mWidth;
+            x = this.getLeftPadding() - mWidth;
         }
-        y = laneHeight * getLineNum();
+        y = mLaneHeight * getLineNum();
 
         if (mFirstShowBitmap == null) {
-            Paint.FontMetricsInt fontMetrics = getFontMetrics();
-            if (fontMetrics == null) {
-                return;
-            }
-//            mHeight = fontMetrics.descent - fontMetrics.ascent;
             int bitmapHeight = 0;
             boolean isOverLane;
-            if (mHeight > laneHeight) {
+            if (mHeight > mLaneHeight) {
                 bitmapHeight = mHeight;
                 isOverLane = true;
             } else {
-                bitmapHeight = laneHeight;
+                bitmapHeight = mLaneHeight;
                 isOverLane = false;
             }
-            // 如果上一个缓存的bitmap为空，那么重新创建一个bitmap
-            if (mCacheBitmap == null) {
-                mFirstShowBitmap = Bitmap.createBitmap(mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2, bitmapHeight + getBorderStrokeWidth() * 2, Bitmap.Config.ARGB_8888);
-            } else {
-                mFirstShowBitmap = createMatrixBitmap(mCacheBitmap, mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2, bitmapHeight + getBorderStrokeWidth() * 2);
+            if (mCacheBitmap != null && !mCacheBitmap.isRecycled()) {
                 mCacheBitmap.recycle();
             }
+            mFirstShowBitmap = Bitmap.createBitmap(mWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
 
             Canvas innerCanvas = new Canvas(mFirstShowBitmap);
             // 绘制弹幕
             int yPos = 0;
             if (isOverLane) {
-                yPos = Math.abs(fontMetrics.ascent + fontMetrics.leading);
-                // 绘制线框
-                if (this.getBorderColor() != -1) {
-                    int top = Math.max(getBorderStrokeWidth(), (laneHeight - mHeight) / 2 - getBorderStrokeWidth());
-                    int bottom = Math.min(bitmapHeight + getBorderStrokeWidth() , (laneHeight + mHeight) / 2 + getBorderStrokeWidth());
-                    int left = getBorderStrokeWidth();
-                    int right = mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2 - getBorderStrokeWidth();
-
-                    mPath.reset();
-                    mPath.moveTo(left, top);
-                    mPath.lineTo(right, top);
-                    mPath.lineTo(right, bottom);
-                    mPath.lineTo(left, bottom);
-                    mPath.lineTo(left, top);
-                }
+                yPos = (int) (mTextHeight + mSpaceWidth - fontMetrics.bottom);
             } else {
-                yPos = (laneHeight - mHeight) / 2 + Math.abs(fontMetrics.ascent + fontMetrics.leading);
-                // 绘制线框
-                if (this.getBorderColor() != -1) {
-                    int top = Math.max(getBorderStrokeWidth(), (laneHeight - mHeight) / 2 - getBorderStrokeWidth());
-                    int bottom = Math.min(bitmapHeight + getBorderStrokeWidth() , (laneHeight + mHeight) / 2 + getBorderStrokeWidth());
-                    int left = getBorderStrokeWidth();
-                    int right = mWidth + getBorderStrokeWidth() * 2 + DEFAULT_PADDING * 2 - getBorderStrokeWidth();
-                    mPath.reset();
-                    mPath.moveTo(left, top);
-                    mPath.lineTo(right, top);
-                    mPath.lineTo(right, bottom);
-                    mPath.lineTo(left, bottom);
-                    mPath.lineTo(left, top);
-                }
+                yPos = (int) ((mLaneHeight + mTextHeight) / 2 - fontMetrics.bottom);
             }
-            innerCanvas.drawText(this.getContent(), DEFAULT_PADDING, yPos, this.getDanmuPaint());
-            // 绘制线框
-            if (this.getBorderColor() != -1) {
-                innerCanvas.drawPath(mPath, getBorderPaint());
-            }
-        }
+            innerCanvas.drawText(this.getContent(), mSpaceWidth, yPos, this.getDanmuPaint());
 
+            drawDecoration(innerCanvas, 0, 0, mWidth, bitmapHeight, yPos);
+        }
         canvas.drawBitmap(mFirstShowBitmap, x, y, this.getDanmuPaint());
+    }
+
+    private void drawDecoration(Canvas canvas, int left, int top, int right, int bottom, int yPos) {
+        // 绘制线框
+        if (this.getBorderColor() != -1) {
+            drawBorder(canvas, left, top, right, bottom, yPos);
+        }
+    }
+
+    /**
+     * 绘制边框
+     * @param canvas
+     * @param left
+     * @param top
+     * @param right
+     * @param bottom
+     */
+    private void drawBorder(Canvas canvas, int left, int top, int right, int bottom, int yPos) {
+        Path textPath = new Path();
+        getDanmuPaint().getTextPath(this.getContent(), 0, this.getContent().length(), 0.0f, 0.0f, textPath);
+        RectF boundsPath = new RectF();
+        textPath.computeBounds(boundsPath, true);
+        canvas.drawRect(mSpaceWidth, yPos + boundsPath.top, mSpaceWidth + boundsPath.width(), yPos + boundsPath.bottom, getBorderPaint());
     }
 
     // TODO: 2018/8/8 调用此方法防止内存泄漏

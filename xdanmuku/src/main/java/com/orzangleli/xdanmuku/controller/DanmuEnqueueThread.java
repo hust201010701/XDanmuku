@@ -41,15 +41,10 @@ public class DanmuEnqueueThread extends Thread {
     public void run() {
         super.run();
 
-        if (mDanmuController == null) {
-            return;
-        }
-
         while (true) {
             long time1 = System.currentTimeMillis();
             List<SimpleDanmuVo> workingList = mDanmuController.getWorkingList();
             Queue<SimpleDanmuVo> waitingQueue = mDanmuController.getWaitingQueue();
-
             trimWorkingList(workingList);
             long time2 = System.currentTimeMillis();
 //            Log.i("lxc", "1 ---> 2:" + (time2-time1));
@@ -102,11 +97,11 @@ public class DanmuEnqueueThread extends Thread {
                 boolean shouldRecycle = false;
                 switch (simpleDanmuVo.getBehavior()) {
                     case RIGHT2LEFT:
-                        int right = simpleDanmuVo.getPadding() + simpleDanmuVo.getWidth();
+                        int right = simpleDanmuVo.getLeftPadding() + simpleDanmuVo.getWidth();
                         shouldRecycle = right < 0;
                         break;
                     case LEFT2RIGHT:
-                        shouldRecycle = (mWidth + simpleDanmuVo.getWidth() - simpleDanmuVo.getPadding()) < 0;
+                        shouldRecycle = (mWidth + simpleDanmuVo.getWidth() - simpleDanmuVo.getLeftPadding()) < 0;
                         break;
                 }
                 if (shouldRecycle) {
@@ -145,7 +140,7 @@ public class DanmuEnqueueThread extends Thread {
                 if (temp != null && temp.getWidth() <= 0) {
                     continue;
                 }
-                if (temp == null || mWidth - temp.getPadding() > temp.getWidth()) {
+                if (temp == null || mWidth - temp.getLeftPadding() > temp.getWidth()) {
                     return i;
                 }
             }
@@ -156,7 +151,7 @@ public class DanmuEnqueueThread extends Thread {
                 if (temp != null && temp.getWidth() <= 0) {
                     continue;
                 }
-                if (temp == null || temp.getPadding() > temp.getWidth()) {
+                if (temp == null || temp.getLeftPadding() > temp.getWidth()) {
                     return i;
                 }
             }

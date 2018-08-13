@@ -37,10 +37,10 @@ public class DanmuActivity extends AppCompatActivity {
         mXDanmukuView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu(), Color.BLUE);
+                SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu(), Color.GREEN);
                 simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
                 simpleDanmuVo.setDanmuColor(getRandomColor());
-                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(80) + 10);
+                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(80) + 20);
                 simpleDanmuVo.setBehavior(SimpleDanmuVo.Behavior.RIGHT2LEFT);
                 mXDanmukuView.enqueue(simpleDanmuVo);
             }
@@ -49,14 +49,7 @@ public class DanmuActivity extends AppCompatActivity {
         mXDanmukuView.setOnClickDanmuListener(new TouchHelper.OnClickDanmuListener() {
             @Override
             public void onClickDanmu(@Nullable SimpleDanmuVo simpleDanmuVo) {
-                if (simpleDanmuVo == null) {
-                    SimpleDanmuVo simpleDanmuVo2 = SimpleDanmuVo.obtain(getRandomDanmu(), Color.BLUE);
-                    simpleDanmuVo2.setSpeed(new Random().nextInt(2) + 3);
-                    simpleDanmuVo2.setDanmuColor(getRandomColor());
-                    simpleDanmuVo2.setDanmuTextSize(new Random().nextInt(80) + 10);
-                    simpleDanmuVo2.setBehavior(SimpleDanmuVo.Behavior.RIGHT2LEFT);
-                    mXDanmukuView.enqueue(simpleDanmuVo2);
-                } else {
+                if (simpleDanmuVo != null) {
                     Log.i("lxc", " ---> " +simpleDanmuVo.getContent());
                 }
             }

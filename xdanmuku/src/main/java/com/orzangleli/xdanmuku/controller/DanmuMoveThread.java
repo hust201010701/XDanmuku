@@ -22,7 +22,7 @@ import java.util.List;
 public class DanmuMoveThread extends Thread {
     private DanmuController mDanmuController;
     private IDanmukuView mXDanmukuView;
-    private int MOVE_INTERVAL_TIME_MILLS = 16;
+    private int MOVE_INTERVAL_TIME_MILLS = 8;
     private int mWidth = -1;
 
 
@@ -55,7 +55,7 @@ public class DanmuMoveThread extends Thread {
                 if (MOVE_INTERVAL_TIME_MILLS > costTime) {
                     leftTime = (int) (MOVE_INTERVAL_TIME_MILLS - costTime);
                 }
-                Thread.sleep(leftTime);
+                Thread.sleep(MOVE_INTERVAL_TIME_MILLS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -72,18 +72,18 @@ public class DanmuMoveThread extends Thread {
             if (simpleDanmuVo != null) {
                 switch (simpleDanmuVo.getBehavior()) {
                     case RIGHT2LEFT:
-                        if (simpleDanmuVo.getPadding() == Integer.MIN_VALUE) {
+                        if (simpleDanmuVo.getLeftPadding() == Integer.MIN_VALUE) {
                             simpleDanmuVo.setPadding(mWidth);
                         }
-                        simpleDanmuVo.setPadding(simpleDanmuVo.getPadding() - simpleDanmuVo.getSpeed());
+                        simpleDanmuVo.setPadding(simpleDanmuVo.getLeftPadding() - simpleDanmuVo.getSpeed());
                         break;
                     case LEFT2RIGHT:
                         // padding 应该减去自身的宽度，但是此时宽度未知，所以这个padding不是真实的padding
-                        if (simpleDanmuVo.getPadding() == Integer.MIN_VALUE) {
+                        if (simpleDanmuVo.getLeftPadding() == Integer.MIN_VALUE) {
                             simpleDanmuVo.setPadding(0);
                         }
-                        simpleDanmuVo.setPadding(simpleDanmuVo.getPadding() + simpleDanmuVo.getSpeed());
-                        Log.i("lxc", "simpleDanmuVo.getPadding() ---> " + simpleDanmuVo.getPadding());
+                        simpleDanmuVo.setPadding(simpleDanmuVo.getLeftPadding() + simpleDanmuVo.getSpeed());
+                        Log.i("lxc", "simpleDanmuVo.getLeftPadding() ---> " + simpleDanmuVo.getLeftPadding());
                         break;
                     case TOP:
                         simpleDanmuVo.setPadding(mWidth/2);

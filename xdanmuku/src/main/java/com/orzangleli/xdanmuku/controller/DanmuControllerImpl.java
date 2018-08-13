@@ -139,8 +139,8 @@ public class DanmuControllerImpl implements DanmuController<SimpleDanmuVo>{
         } else if (simpleDanmuVo1 != null && simpleDanmuVo2 == null) {
             return simpleDanmuVo1;
         } else {
-            int padding1 = simpleDanmuVo1.getPadding();
-            int padding2 = simpleDanmuVo2.getPadding();
+            int padding1 = simpleDanmuVo1.getLeftPadding();
+            int padding2 = simpleDanmuVo2.getLeftPadding();
 
             int width1 = simpleDanmuVo1.getWidth();
             int width2 = simpleDanmuVo2.getWidth();

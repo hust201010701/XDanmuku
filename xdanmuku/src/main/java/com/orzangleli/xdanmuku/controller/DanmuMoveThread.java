@@ -46,15 +46,7 @@ public class DanmuMoveThread extends Thread {
         while (true) {
             List<SimpleDanmuVo> workingList = mDanmuController.getWorkingList();
             moveAllWorkingDanmu(workingList);
-            long costTime = 0;
-            if (mXDanmukuView != null) {
-                costTime = mXDanmukuView.drawDanmukus();
-            }
             try {
-                int leftTime = MOVE_INTERVAL_TIME_MILLS;
-                if (MOVE_INTERVAL_TIME_MILLS > costTime) {
-                    leftTime = (int) (MOVE_INTERVAL_TIME_MILLS - costTime);
-                }
                 Thread.sleep(MOVE_INTERVAL_TIME_MILLS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -75,14 +67,14 @@ public class DanmuMoveThread extends Thread {
                         if (simpleDanmuVo.getLeftPadding() == Integer.MIN_VALUE) {
                             simpleDanmuVo.setPadding(mWidth);
                         }
-                        simpleDanmuVo.setPadding(simpleDanmuVo.getLeftPadding() - simpleDanmuVo.getSpeed());
+                        simpleDanmuVo.setPadding((int) (simpleDanmuVo.getLeftPadding() - simpleDanmuVo.getSpeed()));
                         break;
                     case LEFT2RIGHT:
                         // padding 应该减去自身的宽度，但是此时宽度未知，所以这个padding不是真实的padding
                         if (simpleDanmuVo.getLeftPadding() == Integer.MIN_VALUE) {
                             simpleDanmuVo.setPadding(0);
                         }
-                        simpleDanmuVo.setPadding(simpleDanmuVo.getLeftPadding() + simpleDanmuVo.getSpeed());
+                        simpleDanmuVo.setPadding((int) (simpleDanmuVo.getLeftPadding() + simpleDanmuVo.getSpeed()));
                         Log.i("lxc", "simpleDanmuVo.getLeftPadding() ---> " + simpleDanmuVo.getLeftPadding());
                         break;
                     case TOP:

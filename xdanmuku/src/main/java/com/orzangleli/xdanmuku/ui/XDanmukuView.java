@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import com.orzangleli.xdanmuku.controller.DanmuController;
 import com.orzangleli.xdanmuku.controller.DanmuControllerImpl;
+import com.orzangleli.xdanmuku.controller.DanmuDrawThread;
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
 import com.orzangleli.xdanmuku.controller.DanmuMoveThread;
 import com.orzangleli.xdanmuku.util.XUtils;
@@ -53,6 +54,8 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     private List<DanmuDrawer> mDanmuDrawerList;
     private DanmuEnqueueThread mDanmuEnqueueThread;
     private DanmuMoveThread mDanmuMoveThread;
+    private DanmuDrawThread mDanmuDrawThread;
+
     private boolean mIsDebug = false;
     private long mDrawCostTime = 0;
     private TouchHelper mTouchHelper;
@@ -101,6 +104,11 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         mDanmuMoveThread.setName("DanmuMoveThread");
         mDanmuMoveThread.setDanmuController(this, mDanmuController);
         mDanmuMoveThread.start();
+
+        mDanmuDrawThread = new DanmuDrawThread();
+        mDanmuDrawThread.setName("DanmuDrawThread");
+        mDanmuDrawThread.setDanmuController(this, mDanmuController);
+        mDanmuDrawThread.start();
     }
 
     private void initPaint() {
@@ -114,6 +122,7 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         boolean isConsumed = mTouchHelper.onTouchEvent(event);
         return isConsumed ? true : super.onTouchEvent(event);
     }
+
 
     @Override
     public void onDestroy() {

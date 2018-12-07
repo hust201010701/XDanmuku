@@ -28,9 +28,9 @@ import java.util.List;
  */
 
 public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
-    private static final int LOW_SPEED = 2;
-    private static final int NORMAL_SPEED = 4;
-    private static final int HIGH_SPEED = 8;
+    private static final float LOW_SPEED = 1;
+    private static final float NORMAL_SPEED = 2;
+    private static final float HIGH_SPEED = 4;
     private static final int SMALL_TEXT_SIZE = 30;
     private static final int PRIORITY_LOW = 1;
     private static final int PRIORITY_NORMAL = 2;
@@ -50,7 +50,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
     private int mHeight = 0;
 
     // 弹幕速度
-    private int mSpeed;
+    private float mSpeed;
     // 业务弹幕数据类型
     private T mData;
     // 弹幕内容
@@ -117,7 +117,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         return obtain(content, HIGH_SPEED, Color.RED, SMALL_TEXT_SIZE, null, null, PRIORITY_NORMAL, borderColor);
     }
 
-    public static SimpleDanmuVo obtain(String content, int speed, int danmuColor, int danmuTextSize, Paint danmuPaint, Object data, int priority, int borderColor) {
+    public static SimpleDanmuVo obtain(String content, float speed, int danmuColor, int danmuTextSize, Paint danmuPaint, Object data, int priority, int borderColor) {
 //        SimpleDanmuVo simpleDanmuVo = null;
 //        synchronized (sPoolSync) {
 //            if (sPool != null && sPool.size() > 0) {
@@ -201,11 +201,11 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         this.mLeftPadding = mPadding;
     }
 
-    public int getSpeed() {
+    public float getSpeed() {
         return mSpeed;
     }
 
-    public void setSpeed(int mSpeed) {
+    public void setSpeed(float mSpeed) {
         this.mSpeed = mSpeed;
     }
 
@@ -373,7 +373,7 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
         }
         y = mLaneHeight * getLineNum();
 
-        if (mFirstShowBitmap == null) {
+//        if (mFirstShowBitmap == null) {
             int bitmapHeight = 0;
             boolean isOverLane;
             if (mHeight > mLaneHeight) {
@@ -383,12 +383,12 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
                 bitmapHeight = mLaneHeight;
                 isOverLane = false;
             }
-            if (mCacheBitmap != null && !mCacheBitmap.isRecycled()) {
-                mCacheBitmap.recycle();
-            }
+//            if (mCacheBitmap != null && !mCacheBitmap.isRecycled()) {
+//                mCacheBitmap.recycle();
+//            }
             mFirstShowBitmap = Bitmap.createBitmap(mWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
 
-            Canvas innerCanvas = new Canvas(mFirstShowBitmap);
+//            Canvas innerCanvas = new Canvas(mFirstShowBitmap);
             // 绘制弹幕
             int yPos = 0;
             if (isOverLane) {
@@ -396,11 +396,11 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
             } else {
                 yPos = (int) ((mLaneHeight + mTextHeight) / 2 - fontMetrics.bottom);
             }
-            innerCanvas.drawText(this.getContent(), mSpaceWidth, yPos, this.getDanmuPaint());
+            canvas.drawText(this.getContent(), x - mSpaceWidth, y, this.getDanmuPaint());
 
-            drawDecoration(innerCanvas, 0, 0, mWidth, bitmapHeight, yPos);
-        }
-        canvas.drawBitmap(mFirstShowBitmap, x, y, this.getDanmuPaint());
+            drawDecoration(canvas, 0, 0, mWidth, bitmapHeight, yPos);
+//        }
+//        canvas.drawBitmap(mFirstShowBitmap, x, y, this.getDanmuPaint());
     }
 
     private void drawDecoration(Canvas canvas, int left, int top, int right, int bottom, int yPos) {

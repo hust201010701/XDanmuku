@@ -38,7 +38,7 @@ public class DanmuActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu(), Color.GREEN);
-                simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
+                simpleDanmuVo.setSpeed(new Random().nextFloat() * 1 + 1);
                 simpleDanmuVo.setDanmuColor(getRandomColor());
                 simpleDanmuVo.setDanmuTextSize(new Random().nextInt(80) + 20);
                 simpleDanmuVo.setBehavior(SimpleDanmuVo.Behavior.RIGHT2LEFT);
@@ -83,7 +83,7 @@ public class DanmuActivity extends AppCompatActivity {
             public void run() {
                 while (true) {
                     SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu());
-                    simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
+                    simpleDanmuVo.setSpeed(new Random().nextInt() * 2 + 1);
                     simpleDanmuVo.setDanmuColor(getRandomColor());
                     simpleDanmuVo.setDanmuTextSize(new Random().nextInt(30) + 60);
                     mXDanmukuView.enqueue(simpleDanmuVo);

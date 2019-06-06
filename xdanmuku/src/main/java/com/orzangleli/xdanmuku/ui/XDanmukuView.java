@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Queue;
 
 /**
- * <p>description：
+ * <p>description：测试git是否正常
  * <p>===============================
  * <p>creator：lixiancheng
  * <p>create time：2018/6/1 下午3:06

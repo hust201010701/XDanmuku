@@ -6,6 +6,8 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 
+import com.chillingvan.canvasgl.ICanvasGL;
+
 /**
  * <p>description：
  * <p>===============================
@@ -42,6 +44,12 @@ public class XUtils {
     public static void clearCanvas(Canvas canvas) {
         if (canvas != null) {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        }
+    }
+
+    public static void clearCanvas(ICanvasGL canvas) {
+        if (canvas != null) {
+            canvas.clearBuffer();
         }
     }
 

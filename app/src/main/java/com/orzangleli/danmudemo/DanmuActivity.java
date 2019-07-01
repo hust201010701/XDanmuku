@@ -8,14 +8,16 @@ import android.util.Log;
 import android.view.View;
 
 import com.orzangleli.xdanmuku.ui.TouchHelper;
+import com.orzangleli.xdanmuku.ui.XDanmakuView2;
 import com.orzangleli.xdanmuku.ui.XDanmukuView;
+import com.orzangleli.xdanmuku.ui.XDanmukuView3;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
 
 import java.util.Random;
 
 public class DanmuActivity extends AppCompatActivity {
 
-    XDanmukuView mXDanmukuView;
+    private XDanmukuView3 mXDanmakuView2;
 
     private static final int CHEN_XIANG = 2132902;
     private static final int FENG_TI_MO = 71017;
@@ -31,10 +33,10 @@ public class DanmuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_danmu);
 
-        mXDanmukuView = this.findViewById(R.id.xdanmukuView);
-        mXDanmukuView.setDebug(true);
+        mXDanmakuView2 = this.findViewById(R.id.xdanmukuView);
+//        mXDanmakuView2.setDebug(true);
 
-        mXDanmukuView.setOnClickListener(new View.OnClickListener() {
+        mXDanmakuView2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 SimpleDanmuVo simpleDanmuVo = SimpleDanmuVo.obtain(getRandomDanmu(), Color.GREEN);
@@ -42,23 +44,23 @@ public class DanmuActivity extends AppCompatActivity {
                 simpleDanmuVo.setDanmuColor(getRandomColor());
                 simpleDanmuVo.setDanmuTextSize(new Random().nextInt(80) + 20);
                 simpleDanmuVo.setBehavior(SimpleDanmuVo.Behavior.RIGHT2LEFT);
-                mXDanmukuView.enqueue(simpleDanmuVo);
+                mXDanmakuView2.enqueue(simpleDanmuVo);
             }
         });
 
-        mXDanmukuView.setOnClickDanmuListener(new TouchHelper.OnClickDanmuListener() {
-            @Override
-            public void onClickDanmu(@Nullable SimpleDanmuVo simpleDanmuVo) {
-                if (simpleDanmuVo != null) {
-                    Log.i("lxc", " ---> " +simpleDanmuVo.getContent());
-                }
-            }
-
-            @Override
-            public void onLongClickDanmu(@Nullable SimpleDanmuVo simpleDanmuVo) {
-
-            }
-        });
+//        mXDanmakuView2.setOnClickDanmuListener(new TouchHelper.OnClickDanmuListener() {
+//            @Override
+//            public void onClickDanmu(@Nullable SimpleDanmuVo simpleDanmuVo) {
+//                if (simpleDanmuVo != null) {
+//                    Log.i("lxc", " ---> " +simpleDanmuVo.getContent());
+//                }
+//            }
+//
+//            @Override
+//            public void onLongClickDanmu(@Nullable SimpleDanmuVo simpleDanmuVo) {
+//
+//            }
+//        });
 
 //        startFakeDanmu();
 
@@ -70,7 +72,7 @@ public class DanmuActivity extends AppCompatActivity {
 //                simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
 //                simpleDanmuVo.setDanmuColor(getRandomColor());
 //                simpleDanmuVo.setDanmuTextSize(new Random().nextInt(30) + 60);
-//                mXDanmukuView.enqueue(simpleDanmuVo);
+//                mXDanmakuView2.enqueue(simpleDanmuVo);
 //            }
 //        });
 
@@ -86,7 +88,7 @@ public class DanmuActivity extends AppCompatActivity {
                     simpleDanmuVo.setSpeed(new Random().nextInt(2) + 3);
                     simpleDanmuVo.setDanmuColor(getRandomColor());
                     simpleDanmuVo.setDanmuTextSize(new Random().nextInt(30) + 60);
-                    mXDanmukuView.enqueue(simpleDanmuVo);
+                    mXDanmakuView2.enqueue(simpleDanmuVo);
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {

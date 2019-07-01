@@ -5,30 +5,21 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.SurfaceTexture;
-import android.os.Handler;
-import android.os.Message;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.TextureView;
-import android.view.View;
-import android.widget.TextView;
-
 import com.orzangleli.xdanmuku.controller.DanmuController;
 import com.orzangleli.xdanmuku.controller.DanmuControllerImpl;
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
 import com.orzangleli.xdanmuku.controller.DanmuMoveThread;
 import com.orzangleli.xdanmuku.util.XUtils;
 import com.orzangleli.xdanmuku.vo.SimpleDanmuVo;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -45,7 +36,7 @@ import java.util.Queue;
  * <p>@version
  */
 
-public class XDanmukuView extends TextureView implements TextureView.SurfaceTextureListener, IDanmukuView {
+public class XDanmukuView3 extends SurfaceView implements SurfaceHolder.Callback, IDanmukuView {
 
     // 字幕画笔
     private Paint mDanmukuPaint, mClearPaint;
@@ -62,31 +53,32 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
 
     private int mWidth = -1, mHeight = -1;
 
-    private SurfaceHolder mHolder;
-
     private Bitmap mBakBitmap;
     private Canvas mBakCanvas;
 
     public static final int MSG_UPDATE = 1;
+    SurfaceHolder mHolder;
 
-    public XDanmukuView(Context context) {
+    public XDanmukuView3(Context context) {
         super(context);
         init(context);
     }
 
-    public XDanmukuView(Context context, AttributeSet attrs) {
+    public XDanmukuView3(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public XDanmukuView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public XDanmukuView3(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }
 
     public void init(Context context) {
         initPaint();
-
+        mHolder = this.getHolder();
+        mHolder.addCallback(this);
+    
         mTouchHelper = new TouchHelper(this, context);
 
         mDanmuController = new DanmuControllerImpl();
@@ -145,12 +137,12 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
     }
 
     public synchronized long drawDanmukus() {
-        Canvas canvas = this.lockCanvas();
+        Canvas canvas = mHolder.lockCanvas();
         if (canvas == null) {
             return 0;
         }
         long startTime = SystemClock.elapsedRealtime();
-        //XUtils.clearCanvas(canvas);
+        XUtils.clearCanvas(canvas);
         // 绘制航道
         if (mIsDebug) {
             drawLane(canvas);
@@ -175,7 +167,7 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
                 }
             }
         }
-        unlockCanvasAndPost(canvas);
+        mHolder.unlockCanvasAndPost(canvas);
     
         long l = SystemClock.elapsedRealtime() - startTime;
         Log.i("lxc", "cost time ---> " + l);
@@ -225,26 +217,20 @@ public class XDanmukuView extends TextureView implements TextureView.SurfaceText
         }
     }
 
-    @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        mWidth = width;
-        mHeight = height;
+    @Override public void surfaceCreated(SurfaceHolder holder) {
+        mWidth = holder.getSurfaceFrame().width();
+        mHeight = holder.getSurfaceFrame().height();
         mDanmuEnqueueThread.setWidth(mWidth);
     }
-
-    @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+    
+    @Override public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    
     }
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        return false;
+    
+    @Override public void surfaceDestroyed(SurfaceHolder holder) {
+    
     }
-
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-    }
-
+    
     interface DanmuDrawer {
         /**
          * 返回值为弹幕的长度

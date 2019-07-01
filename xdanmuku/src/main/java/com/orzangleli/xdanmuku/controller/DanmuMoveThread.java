@@ -22,7 +22,7 @@ import java.util.List;
 public class DanmuMoveThread extends Thread {
     private DanmuController mDanmuController;
     private IDanmukuView mXDanmukuView;
-    private int MOVE_INTERVAL_TIME_MILLS = 8;
+    private int MOVE_INTERVAL_TIME_MILLS = 16;
     private int mWidth = -1;
 
 

@@ -9,6 +9,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.support.annotation.NonNull;
 
+import com.chillingvan.canvasgl.ICanvasGL;
 import com.orzangleli.xdanmuku.controller.DanmuEnqueueThread;
 import com.orzangleli.xdanmuku.util.XUtils;
 
@@ -401,6 +402,65 @@ public class SimpleDanmuVo<T> implements Comparable<SimpleDanmuVo> {
             drawDecoration(innerCanvas, 0, 0, mWidth, bitmapHeight, yPos);
         }
         canvas.drawBitmap(mFirstShowBitmap, x, y, this.getDanmuPaint());
+    }
+
+    public void drawDanmukusInternal(ICanvasGL canvas, int width, int height) {
+        if (canvas == null || this.getContent() == null || "".equals(this.getContent())) {
+            return;
+        }
+
+        mLaneHeight = height / DanmuEnqueueThread.MAX_LINE_NUMS;
+        Paint.FontMetricsInt fontMetrics = getFontMetrics();
+        float padding = getBorderStrokeWidth();
+        if (mWidth == 0 || mHeight == 0) {
+            Path textPath = new Path();
+            getDanmuPaint().getTextPath(this.getContent(), 0, this.getContent().length(), 0.0f, 0.0f, textPath);
+            boundsPath = new RectF();
+            textPath.computeBounds(boundsPath, true);
+
+            mTextWidth = boundsPath.width();
+            mTextHeight = boundsPath.height();
+
+            mWidth = (int) (mTextWidth + 2 * mSpaceWidth);
+            // 这里不适用bounds的height，因为测量可能不准确
+            mHeight = (int) (mTextHeight + 2 * mSpaceWidth);
+        }
+
+        if (mBehavior == Behavior.RIGHT2LEFT) {
+            x = this.getLeftPadding();
+        } else if (mBehavior == Behavior.LEFT2RIGHT) {
+            x = this.getLeftPadding() - mWidth;
+        }
+        y = mLaneHeight * getLineNum();
+
+        if (mFirstShowBitmap == null) {
+            int bitmapHeight = 0;
+            boolean isOverLane;
+            if (mHeight > mLaneHeight) {
+                bitmapHeight = mHeight;
+                isOverLane = true;
+            } else {
+                bitmapHeight = mLaneHeight;
+                isOverLane = false;
+            }
+            if (mCacheBitmap != null && !mCacheBitmap.isRecycled()) {
+                mCacheBitmap.recycle();
+            }
+            mFirstShowBitmap = Bitmap.createBitmap(mWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
+
+            Canvas innerCanvas = new Canvas(mFirstShowBitmap);
+            // 绘制弹幕
+            int yPos = 0;
+            if (isOverLane) {
+                yPos = (int) (mTextHeight + mSpaceWidth - fontMetrics.bottom);
+            } else {
+                yPos = (int) ((mLaneHeight + mTextHeight) / 2 - fontMetrics.bottom);
+            }
+            innerCanvas.drawText(this.getContent(), mSpaceWidth, yPos, this.getDanmuPaint());
+
+            drawDecoration(innerCanvas, 0, 0, mWidth, bitmapHeight, yPos);
+        }
+        canvas.drawBitmap(mFirstShowBitmap, (int)x, (int)y, mFirstShowBitmap.getWidth(), mFirstShowBitmap.getHeight());
     }
 
     private void drawDecoration(Canvas canvas, int left, int top, int right, int bottom, int yPos) {
